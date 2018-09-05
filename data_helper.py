@@ -12,7 +12,7 @@ import random
 from copy import deepcopy
 from torch.utils.data import DataLoader, Dataset
 
-
+random.seed(0)
 
 def loadMLData(file_dir):
     """
@@ -24,7 +24,8 @@ def loadMLData(file_dir):
     ml_dir = file_dir
     ml_rating = pd.read_csv(ml_dir, header=0, 
                             names=['uid', 'mid', 'rating', 'timestamp'])
-    
+    # make ratings integers
+    ml_rating['rating'] = ml_rating['rating'] * 2
     # Reindex 
     user_id = ml_rating[['uid']].drop_duplicates().reindex()
     user_id['userId'] = np.arange(len(user_id))
