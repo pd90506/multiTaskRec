@@ -91,6 +91,7 @@ class SampleGenerator(object):
         self.n_users = len(self.user_pool)
         self.item_pool = set(self.ratings['itemId'].unique())
         self.n_items = len(self.item_pool)
+        self.n_rating_levels = len(self.ratings['rating'].unique()) # read the total rating levels
 
         self.train_ratings, self.test_ratings = self._split_loo(self.normalize_ratings)
 

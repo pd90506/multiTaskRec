@@ -7,6 +7,7 @@ Created on Tue Sep  4 17:41:07 2018
 """
 
 import torch
+from loss import OrdinalMSELoss
 #from gmf import GMF
 #from engine import Engine
 #from utils import use_cuda, resume_checkpoint
@@ -26,6 +27,7 @@ def use_optimizer(network, params):
                                         momentum=params['rmsprop_momentum'])
     return optimizer
 
+
 class MLP(torch.nn.Module):
     def __init__(self, config):
         super(MLP, self).__init__()
@@ -33,6 +35,7 @@ class MLP(torch.nn.Module):
         self.num_users = config['num_users']
         self.num_items = config['num_items']
         self.latent_dim = config['latent_dim']
+        self.num_thresholds = config['num_rating_levels']
 
         self.embedding_user = torch.nn.Embedding(num_embeddings=self.num_users, embedding_dim=self.latent_dim)
         self.embedding_item = torch.nn.Embedding(num_embeddings=self.num_items, embedding_dim=self.latent_dim)
@@ -43,7 +46,7 @@ class MLP(torch.nn.Module):
 
         self.affine_output = torch.nn.Linear(in_features=config['layers'][-1], out_features=1)
         self.logistic = torch.nn.Sigmoid()
-
+        
     def forward(self, user_indices, item_indices):
         user_embedding = self.embedding_user(user_indices)
         item_embedding = self.embedding_item(item_indices)
@@ -67,7 +70,7 @@ class MLPEngine():
         self.config = config
         self.model = MLP(config)
         self.opt = use_optimizer(self.model, config)
-        self.crit = torch.nn.MSELoss(reduction='sum')
+        self.crit = OrdinalMSELoss(reduction='sum')
         if self.config['use_cuda'] is True:
             use_cuda(True, config['device_id'])
             self.model.cuda()
@@ -106,9 +109,12 @@ class MLPEngine():
         ratings_pred = self.model(users, items)
         ratings = ratings.view(-1, 1)
         #print(ratings_pred, ratings)
-        loss = self.crit(ratings_pred, ratings)
+        loss = self.crit(ratings_pred, ratings, ratings)
         loss.backward()
         self.opt.step()
+        
+        ### if flag: update only thresholds
+        
         #if self.config['use_cuda'] is True:
         #    loss = loss.data.cpu().numpy()[0]
         #else:

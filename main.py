@@ -18,16 +18,17 @@ if __name__ == '__main__':
     sample_generator = SampleGenerator(ratings=ratings)    
     n_users = sample_generator.n_users
     n_items = sample_generator.n_items
-     
+    n_rating_levels = sample_generator.n_rating_levels 
     
     
     
-    config = {'num_epoch': 10,
+    config = {'num_epoch': 1,
               'batch_size': 128,  # 1024,
               'optimizer': 'adam',
               'adam_lr': 1e-3,
               'num_users': n_users,
               'num_items': n_items,
+              'num_rating_levels':n_rating_levels,
               'latent_dim': 8,
               'num_negative': 4,
               'layers': [16,64,32,16,8],  # layers[0] is the concat of latent user vector & latent item vector
@@ -42,5 +43,5 @@ if __name__ == '__main__':
              
         
         engine.train_epoch(train_loader, epoch)
-        loss = engine.evaluate(evaluate_data, epoch_id=epoch)
-        print('The testing loss for epoch #{} is {:3f}\n'.format(epoch, loss))
+        #loss = engine.evaluate(evaluate_data, epoch_id=epoch)
+        #print('The testing loss for epoch #{} is {:3f}\n'.format(epoch, loss))
