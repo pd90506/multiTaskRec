@@ -34,8 +34,8 @@ class Thresholds():
             raise Exception("Thresholds validation not pass!")
             
     def validate(self):
-        self.thresholds[0] = self.thresholds[1].item()
-        self.thresholds[self.num_thresholds-1] = self.thresholds[self.num_thresholds-2].item()
+        self.thresholds[0] = -1 #self.thresholds[1].item()
+        self.thresholds[self.num_thresholds-1] = 1 #self.thresholds[self.num_thresholds-2].item()
                 
 #    def validate_v2(self):
 #        levels = len(self.thresholds)

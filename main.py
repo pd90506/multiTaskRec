@@ -9,6 +9,8 @@ Created on Wed Sep  5 09:54:19 2018
 #import torch
 from model import MLPEngine
 from data_helper import loadMLData, SampleGenerator
+import matplotlib.pyplot as plt
+import numpy as np
 
 # set configuration
 if __name__ == '__main__':
@@ -22,7 +24,7 @@ if __name__ == '__main__':
     
     
     
-    config = {'num_epoch': 2,
+    config = {'num_epoch': 5,
               'batch_size': 128,  # 1024,
               'optimizer': 'adam',
               'adam_lr': 1e-3,
@@ -37,6 +39,9 @@ if __name__ == '__main__':
               'device_id': 0 }
     engine = MLPEngine(config)
     
+    
+    th = np.random.randn(config['num_epoch'], config['num_rating_levels'] + 1)
+    counter = 0
     for epoch in range(config['num_epoch']):
         train_loader = sample_generator.instance_a_train_loader(config['num_negative'], config['batch_size'])   
         evaluate_data = sample_generator.evaluate_data
@@ -44,5 +49,12 @@ if __name__ == '__main__':
         
         engine.train_epoch(train_loader, epoch)
         print("Thresholds: {}".format(engine.thresholds.thresholds.data))
+        th[counter,:] = engine.thresholds.thresholds.data.numpy()
         #loss = engine.evaluate(evaluate_data, epoch_id=epoch)
         #print('The testing loss for epoch #{} is {:3f}\n'.format(epoch, loss))
+        counter += 1
+    x = list(range(config['num_epoch']))  
+    
+    for i in range(config['num_epoch']):
+        plt.plot(x, th[:, i])
+    plt.show()
