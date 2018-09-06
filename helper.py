@@ -67,6 +67,9 @@ class Thresholds():
         if not self._verify():
             self.thresholds[idx] = temp
         self.validate()
+        
+    def get_threshold(self, idx):
+        return self.thresholds[idx].item()        
             
             
 

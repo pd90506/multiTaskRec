@@ -9,6 +9,7 @@ Created on Tue Sep  4 17:41:07 2018
 import torch
 from loss import OrdinalMSELoss
 from helper import Thresholds
+import numpy as np
 #from gmf import GMF
 #from engine import Engine
 #from utils import use_cuda, resume_checkpoint
@@ -84,16 +85,17 @@ class MLPEngine():
         self.model.train()
         total_loss = 0
         num_ratings = 0
+        update_th = False
         for batch_id, batch in enumerate(train_loader):
             assert isinstance(batch[0], torch.LongTensor), 'user and item input should be torch.LongTensor'
             user, item, rating = batch[0], batch[1], batch[2]
             #rating = rating.float() # do not need to be float anymore
-            
             if self.config['use_cuda'] is True:
                 user = user.cuda()
                 item = item.cuda()
                 rating = rating.cuda()
-            loss = self.train_single_batch(user, item, rating)
+            loss = self.train_single_batch(user, item, rating, update_th)
+            update_th = not update_th
             total_loss += loss
             num_batch_ratings = len(rating)
             num_ratings += num_batch_ratings
@@ -103,10 +105,11 @@ class MLPEngine():
         print('The total loss for the epoch #{} is {:5.2f}'.format(epoch_id, total_loss))
         print('The average loss for epoch #{} is {:3f}'.format(epoch_id, ave_loss))
         
-    def train_single_batch(self, users, items, ratings):
+    def train_single_batch(self, users, items, ratings, update_th=False):
         assert hasattr(self, 'model'), 'Please specify the exact model !'
         if self.config['use_cuda'] is True:
-            users, items, ratings = users.cuda(), items.cuda(), ratings.cuda()
+                users, items, ratings = users.cuda(), items.cuda(), ratings.cuda()
+                
         self.opt.zero_grad()
         ratings_pred = self.model(users, items)
         ratings = ratings.long()
@@ -121,8 +124,12 @@ class MLPEngine():
         th1 = th1.view(-1,1)
         th2 = th2.view(-1,1)
         loss = self.crit(ratings_pred, th1, th2)
-        loss.backward()
-        self.opt.step()
+        if update_th:
+            #todo
+            self.update_thresholds(ratings_pred, ratings)
+        else:
+            loss.backward()
+            self.opt.step()
         #self.update_th() # implement!
         
         ### if flag: update only thresholds
@@ -148,6 +155,29 @@ class MLPEngine():
         
         return loss
     
+    def update_thresholds(self, ratings_pred, ratings, lr=1e-5):
+        lr = lr # set learning rate
+        ratings_pred = ratings_pred.view(-1)
+        ratings = ratings.view(-1)
+        th = self.thresholds
+        th_temp = np.random.random(self.num_thresholds)
+        for i in range(self.num_thresholds):
+            th_temp[i] = th.get_threshold(i)
+        for i in range(len(ratings)):
+            th_idx = ratings[i].item()
+            grad1 = th_temp[th_idx] - lr* ratings_pred[i].item()
+            grad2 = th_temp[th_idx - 1] - lr*ratings_pred[i].item()
+            th_temp[th_idx] -= grad1
+            th_temp[th_idx - 1] -= grad2
+            th.alter_threshold(th_idx, th_temp[th_idx])
+            th_temp[th_idx] = th.get_threshold(th_idx)
+            th.alter_threshold(th_idx - 1, th_temp[th_idx - 1])
+            th_temp[th_idx-1] = th.get_threshold(th_idx-1)
+            
+            
+            
+        
+        
     
     
     

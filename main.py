@@ -43,6 +43,6 @@ if __name__ == '__main__':
              
         
         engine.train_epoch(train_loader, epoch)
-        print("Thresholds: {}".format(engine.thresholds.thresholds))
+        print("Thresholds: {}".format(engine.thresholds.thresholds.data))
         #loss = engine.evaluate(evaluate_data, epoch_id=epoch)
         #print('The testing loss for epoch #{} is {:3f}\n'.format(epoch, loss))
