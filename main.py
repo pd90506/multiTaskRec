@@ -22,7 +22,7 @@ if __name__ == '__main__':
     
     
     
-    config = {'num_epoch': 1,
+    config = {'num_epoch': 2,
               'batch_size': 128,  # 1024,
               'optimizer': 'adam',
               'adam_lr': 1e-3,
@@ -43,5 +43,6 @@ if __name__ == '__main__':
              
         
         engine.train_epoch(train_loader, epoch)
+        print("Thresholds: {}".format(engine.thresholds.thresholds))
         #loss = engine.evaluate(evaluate_data, epoch_id=epoch)
         #print('The testing loss for epoch #{} is {:3f}\n'.format(epoch, loss))

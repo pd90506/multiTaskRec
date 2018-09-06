@@ -8,6 +8,7 @@ Created on Tue Sep  4 17:41:07 2018
 
 import torch
 from loss import OrdinalMSELoss
+from helper import Thresholds
 #from gmf import GMF
 #from engine import Engine
 #from utils import use_cuda, resume_checkpoint
@@ -35,7 +36,6 @@ class MLP(torch.nn.Module):
         self.num_users = config['num_users']
         self.num_items = config['num_items']
         self.latent_dim = config['latent_dim']
-        self.num_thresholds = config['num_rating_levels']
 
         self.embedding_user = torch.nn.Embedding(num_embeddings=self.num_users, embedding_dim=self.latent_dim)
         self.embedding_item = torch.nn.Embedding(num_embeddings=self.num_items, embedding_dim=self.latent_dim)
@@ -68,6 +68,8 @@ class MLPEngine():
     """Engine for training & evaluating GMF model"""
     def __init__(self, config):
         self.config = config
+        self.num_thresholds = config['num_rating_levels'] + 1  # including -inf and +inf, set to equal to t1 and t10 respectively
+        self.thresholds = Thresholds(self.num_thresholds) # define thresholds [0-10] , beware that ratings are [1-10]
         self.model = MLP(config)
         self.opt = use_optimizer(self.model, config)
         self.crit = OrdinalMSELoss(reduction='sum')
@@ -85,7 +87,7 @@ class MLPEngine():
         for batch_id, batch in enumerate(train_loader):
             assert isinstance(batch[0], torch.LongTensor), 'user and item input should be torch.LongTensor'
             user, item, rating = batch[0], batch[1], batch[2]
-            rating = rating.float()
+            #rating = rating.float() # do not need to be float anymore
             
             if self.config['use_cuda'] is True:
                 user = user.cuda()
@@ -107,11 +109,21 @@ class MLPEngine():
             users, items, ratings = users.cuda(), items.cuda(), ratings.cuda()
         self.opt.zero_grad()
         ratings_pred = self.model(users, items)
-        ratings = ratings.view(-1, 1)
+        ratings = ratings.long()
         #print(ratings_pred, ratings)
-        loss = self.crit(ratings_pred, ratings, ratings)
+        th = self.thresholds.thresholds
+        th1 = torch.empty(len(ratings))
+        th2 = torch.empty(len(ratings))
+        for i in range(len(ratings)):
+            idx = ratings[i].item()
+            th1[i] = th[idx-1].item()
+            th2[i] = th[idx].item()
+        th1 = th1.view(-1,1)
+        th2 = th2.view(-1,1)
+        loss = self.crit(ratings_pred, th1, th2)
         loss.backward()
         self.opt.step()
+        #self.update_th() # implement!
         
         ### if flag: update only thresholds
         

@@ -17,3 +17,15 @@ class OrdinalMSELoss(MSELoss):
         loss1 = F.mse_loss(input, target1, reduction=self.reduction)
         loss2 = F.mse_loss(input, target2, reduction=self.reduction)
         return loss1 + loss2
+    
+    
+#class OrdinalMSELoss(MSELoss):
+#    def __init__(self, size_average=None, reduce=None, reduction='elementwise_mean'):
+#        super(OrdinalMSELoss, self).__init__(size_average, reduce, reduction)
+#
+#    def forward(self, thresholds, input, target):
+#        threshold1 = 
+#        threshold2 = 
+#        loss1 = F.mse_loss(input, target1, reduction=self.reduction)
+#        loss2 = F.mse_loss(input, target2, reduction=self.reduction)
+#        return loss1 + loss2

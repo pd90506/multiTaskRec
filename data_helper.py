@@ -34,7 +34,7 @@ def loadMLData(file_dir):
     item_id = ml_rating[['mid']].drop_duplicates().reindex()
     item_id['itemId'] = np.arange(len(item_id))
     ml_rating = pd.merge(ml_rating, item_id, on=['mid'], how='left')
-    ml_rating['rating'] = ml_rating['rating'] # astype(int)
+    ml_rating['rating'] = ml_rating['rating'].astype(int)
     
     ml_rating = ml_rating[['userId', 'itemId', 'rating', 'timestamp']]
     # Data prepared
@@ -86,14 +86,14 @@ class SampleGenerator(object):
         assert 'rating' in ratings.columns
 
         self.ratings = ratings
-        self.normalize_ratings = self._normalize(ratings)
+        #self.normalize_ratings = self._normalize(ratings)
         self.user_pool = set(self.ratings['userId'].unique())
         self.n_users = len(self.user_pool)
         self.item_pool = set(self.ratings['itemId'].unique())
         self.n_items = len(self.item_pool)
         self.n_rating_levels = len(self.ratings['rating'].unique()) # read the total rating levels
 
-        self.train_ratings, self.test_ratings = self._split_loo(self.normalize_ratings)
+        self.train_ratings, self.test_ratings = self._split_loo(self.ratings)
 
     def _normalize(self, ratings):
         """normalize into [0, 1] from [0, max_rating]"""
