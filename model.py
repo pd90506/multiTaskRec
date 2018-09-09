@@ -7,6 +7,7 @@ Created on Tue Sep  4 17:41:07 2018
 """
 
 import torch
+import pandas as pd
 #from gmf import GMF
 #from engine import Engine
 #from utils import use_cuda, resume_checkpoint
@@ -68,13 +69,17 @@ class MLPEngine():
         self.model = MLP(config)
         self.opt = use_optimizer(self.model, config)
         self.crit = torch.nn.MSELoss(reduction='sum')
+        self.train_batch = []
+        self.train_loss = []
+        self.test_loss = []
+        
         if self.config['use_cuda'] is True:
             use_cuda(True, config['device_id'])
             self.model.cuda()
         #super(MLPEngine, self).__init__(config)
         print(self.model)
         
-    def train_epoch(self, train_loader, epoch_id):
+    def train_epoch(self, train_loader, epoch_id, evaluate_data):
         assert hasattr(self, 'model'), 'Please specify the exact model !'
         self.model.train()
         total_loss = 0
@@ -92,7 +97,10 @@ class MLPEngine():
             total_loss += loss
             num_batch_ratings = len(rating)
             num_ratings += num_batch_ratings
-            if batch_id % 100 == 0:
+            if batch_id % 50 == 0:
+                self.train_batch.append(batch_id)
+                self.train_loss.append(loss.item()/ num_batch_ratings)
+                self.evaluate_v2(evaluate_data, epoch_id)
                 print('[Training Epoch {}] Batch {}, Loss {:3f}'.format(epoch_id, batch_id, loss / num_batch_ratings))
         ave_loss = total_loss / num_ratings 
         print('The total loss for the epoch #{} is {:5.2f}'.format(epoch_id, total_loss))
@@ -127,9 +135,23 @@ class MLPEngine():
         test_scores = self.model(test_users, test_items)
         ratings = ratings.view(-1, 1)
         loss = self.crit(test_scores, ratings) / ratings.shape[0]
+        #self.test_loss.append(loss.item())
         
         return loss
     
-    
+    def evaluate_v2(self, evaluate_data, epoch_id):
+        assert hasattr(self, 'model'), 'Please specify the exact model !'
+        self.model.eval()
+        test_users, test_items, ratings = evaluate_data[0], evaluate_data[1], evaluate_data[2]
+        #negative_users, negative_items = evaluate_data[2], evaluate_data[3]
+        if self.config['use_cuda'] is True:
+            test_users = test_users.cuda()
+            test_items = test_items.cuda()
+
+        test_scores = self.model(test_users, test_items)
+        ratings = ratings.view(-1, 1)
+        loss = self.crit(test_scores, ratings) / ratings.shape[0]
+        self.test_loss.append(loss.item())
+            
     
     
