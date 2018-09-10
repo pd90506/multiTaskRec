@@ -74,13 +74,17 @@ class MLPEngine():
         self.model = MLP(config)
         self.opt = use_optimizer(self.model, config)
         self.crit = OrdinalMSELoss(reduction='sum')
+        self.train_batch = []
+        self.train_loss = []
+        self.test_loss = []
+        
         if self.config['use_cuda'] is True:
             use_cuda(True, config['device_id'])
             self.model.cuda()
         #super(MLPEngine, self).__init__(config)
         print(self.model)
         
-    def train_epoch(self, train_loader, epoch_id):
+    def train_epoch(self, train_loader, epoch_id, evaluate_data):
         assert hasattr(self, 'model'), 'Please specify the exact model !'
         self.model.train()
         total_loss = 0
@@ -99,7 +103,10 @@ class MLPEngine():
             total_loss += loss
             num_batch_ratings = len(rating)
             num_ratings += num_batch_ratings
-            if batch_id % 100 == 0:
+            if batch_id % 50 == 0:
+                self.train_batch.append(batch_id)
+                self.train_loss.append(loss.item()/ num_batch_ratings)
+                self.evaluate_v2(evaluate_data, epoch_id)
                 print('[Training Epoch {}] Batch {}, Loss {:3f}'.format(epoch_id, batch_id, loss / num_batch_ratings))
         ave_loss = total_loss / num_ratings 
         print('The total loss for the epoch #{} is {:5.2f}'.format(epoch_id, total_loss))
@@ -155,6 +162,30 @@ class MLPEngine():
         
         return loss
     
+    def evaluate_v2(self, evaluate_data, epoch_id):
+        assert hasattr(self, 'model'), 'Please specify the exact model !'
+        self.model.eval()
+        test_users, test_items, ratings = evaluate_data[0], evaluate_data[1], evaluate_data[2]
+        #negative_users, negative_items = evaluate_data[2], evaluate_data[3]
+        if self.config['use_cuda'] is True:
+            test_users = test_users.cuda()
+            test_items = test_items.cuda()
+
+        test_scores = self.model(test_users, test_items)
+        ratings = ratings.view(-1, 1).int()
+        ratings = ratings.numpy()
+        evaluated_ratings = []
+        th = self.thresholds.thresholds
+        for score in test_scores:
+            for i in range(self.num_thresholds):
+                if th[i].item() >= score.item():
+                    evaluated_ratings.append(i)
+                    break
+        
+        acc = sum(1 for x,y in zip(evaluated_ratings,ratings) if x == y) / len(ratings)
+        self.test_loss.append(acc)
+        
+    
     def update_thresholds(self, ratings_pred, ratings, lr=1e-5):
         lr = lr # set learning rate
         ratings_pred = ratings_pred.view(-1)
@@ -165,14 +196,15 @@ class MLPEngine():
             th_temp[i] = th.get_threshold(i)
         for i in range(len(ratings)):
             th_idx = ratings[i].item()
-            grad1 = th_temp[th_idx] - lr* ratings_pred[i].item()
-            grad2 = th_temp[th_idx - 1] - lr*ratings_pred[i].item()
-            th_temp[th_idx] -= grad1
-            th_temp[th_idx - 1] -= grad2
+            grad1 = th_temp[th_idx] - ratings_pred[i].item()
+            grad2 = th_temp[th_idx - 1] - ratings_pred[i].item()
+            th_temp[th_idx] -= lr * grad1
+            th_temp[th_idx - 1] -= lr * grad2
             th.alter_threshold(th_idx, th_temp[th_idx])
             th_temp[th_idx] = th.get_threshold(th_idx)
             th.alter_threshold(th_idx - 1, th_temp[th_idx - 1])
             th_temp[th_idx-1] = th.get_threshold(th_idx-1)
+       # print(th.thresholds)
             
             
             

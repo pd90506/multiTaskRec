@@ -9,7 +9,7 @@ Created on Wed Sep  5 09:54:19 2018
 #import torch
 from model import MLPEngine
 from data_helper import loadMLData, SampleGenerator
-
+import matplotlib.pyplot as plt
 # set configuration
 if __name__ == '__main__':
     
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     
     
     
-    config = {'num_epoch': 2,
+    config = {'num_epoch': 1,
               'batch_size': 128,  # 1024,
               'optimizer': 'adam',
               'adam_lr': 1e-3,
@@ -42,7 +42,18 @@ if __name__ == '__main__':
         evaluate_data = sample_generator.evaluate_data
              
         
-        engine.train_epoch(train_loader, epoch)
+        engine.train_epoch(train_loader, epoch, evaluate_data)
         print("Thresholds: {}".format(engine.thresholds.thresholds.data))
         #loss = engine.evaluate(evaluate_data, epoch_id=epoch)
         #print('The testing loss for epoch #{} is {:3f}\n'.format(epoch, loss))
+    batch = engine.train_batch
+    train_loss = engine.train_loss
+    test_loss = engine.test_loss
+    plt.figure()
+    plt.plot(batch, train_loss, label='training_loss')
+    plt.plot(batch, test_loss, label='accuracy')
+    plt.title('Loss during training')
+    plt.xlabel('batch')
+    plt.ylabel('training loss')
+    plt.legend()
+    plt.show()        

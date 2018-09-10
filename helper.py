@@ -16,7 +16,7 @@ class Thresholds():
     def __init__(self, num_thresholds):
         self.step = 0.1
         self.num_thresholds = num_thresholds
-        th = np.random.randn(self.num_thresholds)
+        th = np.random.rand(self.num_thresholds)
         th.sort()
         self.thresholds = torch.tensor(th, requires_grad=True)
         self.validate()
@@ -34,8 +34,10 @@ class Thresholds():
             raise Exception("Thresholds validation not pass!")
             
     def validate(self):
-        self.thresholds[0] = self.thresholds[1].item()
-        self.thresholds[self.num_thresholds-1] = self.thresholds[self.num_thresholds-2].item()
+        #self.thresholds[0] = self.thresholds[1].item()
+        #self.thresholds[self.num_thresholds-1] = self.thresholds[self.num_thresholds-2].item()
+        self.thresholds[0] = 0
+        self.thresholds[self.num_thresholds-1] = 1
                 
 #    def validate_v2(self):
 #        levels = len(self.thresholds)
