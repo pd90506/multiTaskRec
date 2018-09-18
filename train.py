@@ -4,6 +4,28 @@ from gmf import GMFEngine
 from mlp import MLPEngine
 from neumf import NeuMFEngine
 from data import SampleGenerator
+from datahelper import loadMLData
+
+genres = (  'Action',
+            'Adventure',
+            'Animation',
+            'Children\'s',
+            'Comedy',
+            'Crime',
+            'Documentary',
+            'Drama',
+            'Fantasy',
+            'Film-Noir',
+            'Horror',
+            'Musical',
+            'Mystery',
+            'Romance',
+            'Sci-Fi',
+            'Thriller',
+            'War',
+            'Western',
+            '(no genres listed)' )
+
 
 gmf_config = {'alias': 'gmf_factor8neg4',
               'num_epoch': 200,
@@ -37,6 +59,7 @@ mlp_config = {'alias': 'mlp_factor8neg4_reg_0.0000001',
               'model_dir':'checkpoints/{}_Epoch{}_HR{:.4f}_NDCG{:.4f}.model'}
 
 neumf_config = {'alias': 'pretrain_neumf_factor8neg4',
+                'genres': genres,
                 'num_epoch': 100,
                 'batch_size': 256,
                 'optimizer': 'adam',
@@ -61,18 +84,19 @@ neumf_config = {'alias': 'pretrain_neumf_factor8neg4',
 #ml1m_rating = pd.read_csv(ml1m_dir, sep='::', header=None, names=['uid', 'mid', 'rating', 'timestamp'],  engine='python')
 
 ml100k_dir = 'data/movielens/ratings.csv'
-ml1m_rating = pd.read_csv(ml100k_dir, header=0, names=['uid', 'mid', 'rating', 'timestamp'],  engine='python')
+# ml1m_rating = pd.read_csv(ml100k_dir, header=0, names=['uid', 'mid', 'rating', 'timestamp'],  engine='python')
+ml1m_rating = loadMLData(ml100k_dir)
 
 # Reindex
-user_id = ml1m_rating[['uid']].drop_duplicates().reindex()
-user_id['userId'] = np.arange(len(user_id))
-ml1m_rating = pd.merge(ml1m_rating, user_id, on=['uid'], how='left')
-item_id = ml1m_rating[['mid']].drop_duplicates()
-item_id['itemId'] = np.arange(len(item_id))
-ml1m_rating = pd.merge(ml1m_rating, item_id, on=['mid'], how='left')
-ml1m_rating = ml1m_rating[['userId', 'itemId', 'rating', 'timestamp']]
-print('Range of userId is [{}, {}]'.format(ml1m_rating.userId.min(), ml1m_rating.userId.max()))
-print('Range of itemId is [{}, {}]'.format(ml1m_rating.itemId.min(), ml1m_rating.itemId.max()))
+# user_id = ml1m_rating[['uid']].drop_duplicates().reindex()
+# user_id['userId'] = np.arange(len(user_id))
+# ml1m_rating = pd.merge(ml1m_rating, user_id, on=['uid'], how='left')
+# item_id = ml1m_rating[['mid']].drop_duplicates()
+# item_id['itemId'] = np.arange(len(item_id))
+# ml1m_rating = pd.merge(ml1m_rating, item_id, on=['mid'], how='left')
+# ml1m_rating = ml1m_rating[['userId', 'itemId', 'rating', 'timestamp']]
+# print('Range of userId is [{}, {}]'.format(ml1m_rating.userId.min(), ml1m_rating.userId.max()))
+# print('Range of itemId is [{}, {}]'.format(ml1m_rating.itemId.min(), ml1m_rating.itemId.max()))
 # DataLoader for training
 sample_generator = SampleGenerator(ratings=ml1m_rating)
 evaluate_data = sample_generator.evaluate_data
@@ -82,7 +106,7 @@ evaluate_data = sample_generator.evaluate_data
 #config = mlp_config
 #engine = MLPEngine(config)
 config = neumf_config
-engine = NeuMFEngine(config)
+engine = NeuMFEngine(config, ml1m_rating)
 for epoch in range(config['num_epoch']):
     print('Epoch {} starts !'.format(epoch))
     print('-' * 80)
