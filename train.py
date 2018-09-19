@@ -19,7 +19,7 @@ gmf_config = {'alias': 'gmf_factor8neg4',
               'device_id': 0,
               'model_dir':'checkpoints/{}_Epoch{}_HR{:.4f}_NDCG{:.4f}.model'}
 
-mlp_config = {'alias': 'mlp_factor8neg4_reg_0.0000001',
+mlp_config = {'alias': 'mtncf_factor8neg4_reg_0.0001',
               'num_epoch': 100,
               'batch_size': 256,  # 1024,
               'optimizer': 'adam',
@@ -29,7 +29,7 @@ mlp_config = {'alias': 'mlp_factor8neg4_reg_0.0000001',
               'latent_dim': 8,
               'num_negative': 4,
               'layers': [16,64,32,16,8],  # layers[0] is the concat of latent user vector & latent item vector
-              'l2_regularization': 0.0000001,  # MLP model is sensitive to hyper params
+              'l2_regularization': 0.0001,  # MLP model is sensitive to hyper params
               'use_cuda': False,
               'device_id': 0,
               'pretrain': False,
@@ -79,10 +79,10 @@ evaluate_data = sample_generator.evaluate_data
 # Specify the exact model
 #config = gmf_config
 #engine = GMFEngine(config)
-#config = mlp_config
-#engine = MLPEngine(config)
-config = neumf_config
-engine = NeuMFEngine(config)
+config = mlp_config
+engine = MLPEngine(config)
+#config = neumf_config
+#engine = NeuMFEngine(config)
 for epoch in range(config['num_epoch']):
     print('Epoch {} starts !'.format(epoch))
     print('-' * 80)
