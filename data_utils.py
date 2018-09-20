@@ -106,9 +106,11 @@ def convert_datatype(df):
     df['genre'] = df['genre'].astype('int64')
     return df
 
+
 if __name__ == "__main__":
     y = loadMLData('movielens/ratings.csv', 'movielens/movies.csv')
     print(y.head())
+    #print(y.head())
     # count = 0
     # for i in range(18):
     #     print(num_genre(y,i))
