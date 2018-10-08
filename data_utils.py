@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import random 
+from sklearn.model_selection import train_test_split
 
 def genre_to_int_list(genre_string):
     """
@@ -22,6 +24,16 @@ def genre_to_int_list(genre_string):
         genre_list.append(-1)
     return genre_list
 
+def genre_to_single_int(genre_string):
+    """
+    Convert the list of genre names to a randomly chosen integer code
+    Args: 
+        genre_string: a string of genres names.
+    """
+    genre_list = genre_to_int_list(genre_string)
+    genre_code = random.choice(genre_list)
+    return genre_code
+
 def loadMLData(file_dir, movie_dir):
     """
     Args:
@@ -37,20 +49,25 @@ def loadMLData(file_dir, movie_dir):
                             names=['uid', 'mid', 'rating', 'timestamp'])
     mv_df = pd.read_csv(movie_dir, header=0, \
                             names=['mid', 'title', 'genre_string'])
+    mv_df['genre'] = mv_df['genre_string'].apply(genre_to_single_int) # choose which kind of genre to output
     ml_rating = pd.merge(ml_rating, mv_df, on=['mid'], how='left')
-    ml_rating = ml_rating[['uid', 'mid', 'rating', 'genre_string']]
+    ml_rating = ml_rating[['uid', 'mid', 'rating', 'genre']]
 
     # Reindex 
+    item_id = ml_rating[['mid']].drop_duplicates()
+    item_id['itemId'] = np.arange(len(item_id))
+    ml_rating = pd.merge(ml_rating, item_id, on=['mid'], how='left')
+
+    mv_df_new = pd.merge(mv_df, item_id, on=['mid'], how='left')
+    mv_df_new = mv_df_new[['mid', 'genre']]
+
     user_id = ml_rating[['uid']].drop_duplicates()
     user_id['userId'] = np.arange(len(user_id))
     ml_rating = pd.merge(ml_rating, user_id, on=['uid'], how='left')
     
-    item_id = ml_rating[['mid']].drop_duplicates()
-    item_id['itemId'] = np.arange(len(item_id))
-    ml_rating = pd.merge(ml_rating, item_id, on=['mid'], how='left')
-    ml_rating['rating'] = ml_rating['rating'] # astype(int)
+    
+    #ml_rating['rating'] = ml_rating['rating'] # astype(int)
 
-    ml_rating['genre'] = ml_rating['genre_string'].apply(genre_to_int_list)
     ml_rating = ml_rating[['userId', 'itemId', 'rating', 'genre']]
     
     # Data prepared
@@ -58,12 +75,40 @@ def loadMLData(file_dir, movie_dir):
           ml_rating.userId.max()))
     print('Range of itemId is [{}, {}]'.format(ml_rating.itemId.min(), \
           ml_rating.itemId.max()))
-    return(ml_rating)
+    return(ml_rating, mv_df_new)
+
+def sample_negative(ratings):
+    """return all negative items & 100 sampled negative items"""
+    ## user_pool = set(ratings['userId'].unique())
+    item_pool = set(ratings['itemId'].unique())
+
+    interact_status = ratings.groupby('userId')['itemId'].apply(set).reset_index().rename(
+        columns={'itemId': 'interacted_items'})
+    interact_status['negative_items'] = interact_status['interacted_items'].apply(lambda x: item_pool - x)
+    interact_status['negative_samples'] = interact_status['negative_items'].apply(lambda x: random.sample(x, 99))
+    return interact_status[['userId', 'negative_samples']]
+
+def split_train_test(ratings):
+    """return training set and test set"""
+    train, test = train_test_split(ratings, test_size=0.1, shuffle=True)
+    return [train, test]
+
 
 if __name__ == "__main__":
-    y = loadMLData('movielens/ratings.csv', 'movielens/movies.csv')
-    new_file_name = 'movielens/genre_set.csv'
-    y.to_csv(new_file_name, index=False)
-    print("New dataset exported to /{}".format(new_file_name))
+    y, mv = loadMLData('movielens/ratings.csv', 'movielens/movies.csv')
+    movie_genre_name = 'movielens/movie_genre.csv'
+    train_file_name = 'movielens/train.csv'
+    test_file_name = 'movielens/test.csv'
+    negative_file_name = 'movielens/negative.csv'
+
+    train, test = split_train_test(y)
+
+    train.to_csv(train_file_name, index=False)
+    test.to_csv(test_file_name, index=False)
+    mv = mv.sort_values('mid')
+    mv.to_csv(movie_genre_name, index=False)
+    negatives = sample_negative(y)
+    negatives.to_csv(negative_file_name, index=False)
+
 
 
