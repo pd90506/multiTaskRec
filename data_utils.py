@@ -51,15 +51,18 @@ def loadMLData(file_dir, movie_dir):
                             names=['mid', 'title', 'genre_string'])
     mv_df['genre'] = mv_df['genre_string'].apply(genre_to_single_int) # choose which kind of genre to output
     ml_rating = pd.merge(ml_rating, mv_df, on=['mid'], how='left')
+    ml_rating = ml_rating.dropna()
     ml_rating = ml_rating[['uid', 'mid', 'rating', 'genre']]
 
     # Reindex 
     item_id = ml_rating[['mid']].drop_duplicates()
     item_id['itemId'] = np.arange(len(item_id))
     ml_rating = pd.merge(ml_rating, item_id, on=['mid'], how='left')
+    ml_rating = ml_rating.dropna()
 
     mv_df_new = pd.merge(mv_df, item_id, on=['mid'], how='left')
-    mv_df_new = mv_df_new[['mid', 'genre']]
+    mv_df_new = mv_df_new.dropna()
+    mv_df_new = mv_df_new[['itemId', 'genre']].astype(int)
 
     user_id = ml_rating[['uid']].drop_duplicates()
     user_id['userId'] = np.arange(len(user_id))
@@ -89,23 +92,51 @@ def sample_negative(ratings):
     return interact_status[['userId', 'negative_samples']]
 
 def split_train_test(ratings):
-    """return training set and test set"""
-    train, test = train_test_split(ratings, test_size=0.1, shuffle=True)
+    """return training set and test set by loo"""
+    ratings = ratings.sample(frac=1).reset_index(drop=True)
+    train_user_list = []
+    train_item_list = []
+    train_rating_list = []
+    test_user_list = []
+    test_item_list = []
+    test_rating_list = []
+    user_pool = set(ratings['userId'].unique())
+    for idx in user_pool:
+        flag = 0
+        items = ratings[ratings['userId']==idx][['itemId','rating']]
+        for i, row in items.iterrows():
+            if flag == 0:
+                test_user_list.append(int(idx))
+                test_item_list.append(int(row['itemId']))
+                test_rating_list.append(row['rating'])
+                flag = 1
+            else:
+                train_user_list.append(int(idx))
+                train_item_list.append(int(row['itemId']))
+                train_rating_list.append(row['rating'])
+
+    train = pd.DataFrame({'userId': train_user_list, 'itemId': train_item_list, 'rating': train_rating_list}, columns=['userId', 'itemId', 'rating'])
+    test = pd.DataFrame({'userId': test_user_list, 'itemId': test_item_list, 'rating': test_rating_list},  columns=['userId', 'itemId', 'rating'])
     return [train, test]
+                
+
+                
+    #train, test = train_test_split(ratings, test_size=0.1, shuffle=True)
+    #return [train, test]
 
 
 if __name__ == "__main__":
     y, mv = loadMLData('movielens/ratings.csv', 'movielens/movies.csv')
-    movie_genre_name = 'movielens/movie_genre.csv'
-    train_file_name = 'movielens/train.csv'
-    test_file_name = 'movielens/test.csv'
-    negative_file_name = 'movielens/negative.csv'
+    movie_genre_name = 'Data/movie.genre.csv'
+    train_file_name = 'Data/ml-1m.train.rating'
+    test_file_name = 'Data/ml-1m.test.rating'
+    negative_file_name = 'Data/ml-1m.test.negative'
 
     train, test = split_train_test(y)
 
     train.to_csv(train_file_name, index=False)
     test.to_csv(test_file_name, index=False)
-    mv = mv.sort_values('mid')
+    mv = mv.sort_values('itemId')
     mv.to_csv(movie_genre_name, index=False)
     negatives = sample_negative(y)
     negatives.to_csv(negative_file_name, index=False)

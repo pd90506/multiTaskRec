@@ -11,7 +11,10 @@ import math
 import heapq # for retrieval topK
 import multiprocessing
 import numpy as np
+import pandas as pd
 from time import time
+#from MGMF import get_model
+from datasetclass import Dataset
 #from numba import jit, autojit
 
 # Global variables that are shared across processes
@@ -20,7 +23,7 @@ _testRatings = None
 _testNegatives = None
 _K = None
 
-def evaluate_model(model, testRatings, testNegatives, K, num_thread):
+def evaluate_model(model, testRatings, testNegatives, genreList ,K, num_thread):
     """
     Evaluate the performance (Hit_Ratio, NDCG) of top-K recommendation
     Return: score of each test rating.
@@ -29,10 +32,12 @@ def evaluate_model(model, testRatings, testNegatives, K, num_thread):
     global _testRatings
     global _testNegatives
     global _K
+    global _genreList
     _model = model
     _testRatings = testRatings
     _testNegatives = testNegatives
     _K = K
+    _genreList = genreList
         
     hits, ndcgs = [],[]
     if(num_thread > 1): # Multi-thread
@@ -44,23 +49,23 @@ def evaluate_model(model, testRatings, testNegatives, K, num_thread):
         ndcgs = [r[1] for r in res]
         return (hits, ndcgs)
     # Single thread
-    for idx in range(len(_testRatings)):
-        (hr,ndcg) = eval_one_rating(idx)
+    for idx, row in testRatings.iterrows():
+        (hr,ndcg) = eval_one_rating(idx, row)
         hits.append(hr)
         ndcgs.append(ndcg)      
     return (hits, ndcgs)
 
-def eval_one_rating(idx):
-    rating = _testRatings[idx]
-    items = _testNegatives[idx]
-    u = rating[0]
-    gtItem = rating[1]
-    items.append(gtItem)
+def eval_one_rating(idx, row):
+    rating = row
+    items = eval(_testNegatives[idx])
+    u = rating['userId']
+    gtItem = rating['itemId']
+    items.append(int(gtItem))
     # Get prediction scores
     map_item_score = {}
     users = np.full(len(items), u, dtype = 'int32')
-    predictions = _model.predict([users, np.array(items)], 
-                                 batch_size=100, verbose=0)
+    genre = item_to_onehot_genre(items)
+    predictions = _model.predict([users, np.array(items), genre], batch_size=100, verbose=0)
     for i in range(len(items)):
         item = items[i]
         map_item_score[item] = predictions[i]
@@ -71,6 +76,20 @@ def eval_one_rating(idx):
     hr = getHitRatio(ranklist, gtItem)
     ndcg = getNDCG(ranklist, gtItem)
     return (hr, ndcg)
+
+def item_to_onehot_genre(items):
+    genreList = _genreList
+    item_genres = []
+    for item in items:
+        item_genres.append(genreList[item])
+    num_task = 19
+    num_items = len(items)
+    a = np.zeros((num_items, num_task), int)
+    b = np.array(item_genres)
+    a[np.arange(num_items), b] = 1
+    return a
+
+
 
 def getHitRatio(ranklist, gtItem):
     for item in ranklist:
@@ -84,3 +103,13 @@ def getNDCG(ranklist, gtItem):
         if item == gtItem:
             return math.log(2) / math.log(i+2)
     return 0
+
+# if __name__ == '__main__':
+#     model = get_model(671, 9125, 8, 19, [0,0])
+#     print(model.summary())
+#     dataset = Dataset('Data/')
+#     train, testRatings, testNegatives, genreList = dataset.train_ratings, dataset.test_ratings, dataset.negatives, dataset.genre
+#     (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, genreList, 10, 1)
+#     hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
+#     print(hr)
+#     print(ndcg)
