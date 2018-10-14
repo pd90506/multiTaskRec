@@ -23,7 +23,7 @@ class Args(object):
     def __init__(self):
         self.path = 'Data/'
         self.dataset = 'ml-1m'
-        self.epochs = 10
+        self.epochs = 100
         self.batch_size = 256
         self.num_factors = 8
         self.regs = '[0,0]'
@@ -139,7 +139,14 @@ if __name__ == '__main__':
     t1 = time()
     (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, genreList, topK, evaluation_threads)
     hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
-    print('Init: HR = %.4f, NDCG = %.4f\t [%.1f s]' % (hr, ndcg, time()-t1))
+    print('Init: HR = %.4f, NDCG = %.4f\t [%.1f s]' % (hr, ndcg, time()-t1))\
+
+    # TensorBoard Callbacks
+    #tbCallBack = keras.callbacks.TensorBoard(log_dir='logs')
+    # save Hit ratio and ndcg, loss
+    output = pd.DataFrame(columns=['hr', 'ndcg'])
+    output.loc[0] = [hr, ndcg]
+
 
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
@@ -160,11 +167,13 @@ if __name__ == '__main__':
             hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
                   % (epoch,  t2-t1, hr, ndcg, loss, time()-t2))
+            output.loc[epoch+1] = [hr, ndcg]
             if hr > best_hr:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
 
+    output.to_csv('outputs/eval_result.csv')
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
     print('pause')
     
