@@ -1,0 +1,15 @@
+
+*.h5
+*.pyc
+.DS_Store
+.DS_Store
+.ipynb_checkpoints/data_utils-checkpoint.ipynb
+.ipynb_checkpoints/data_utils-checkpoint.py
+.ipynb_checkpoints/Dataset-checkpoint.py
+.ipynb_checkpoints/evaluate-checkpoint.py
+.ipynb_checkpoints/GMF-checkpoint.ipynb
+.ipynb_checkpoints/MLP-checkpoint.ipynb
+.ipynb_checkpoints/MLP-checkpoint.py
+.ipynb_checkpoints/mmlp-checkpoint.ipynb
+.ipynb_checkpoints/NeuMF-checkpoint.ipynb
+.vscode/settings.json
