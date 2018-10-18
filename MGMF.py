@@ -34,9 +34,9 @@ class Args(object):
         self.out = 1
         self.num_tasks = 19
 
-def init_normal(shape=[0,1], seed=None):
-    mean, stdev = shape
-    return initializers.RandomNormal(mean=0.0, stddev=0.05, seed=seed)
+def init_normal(shape=[0.0, 0.05], seed=None):
+    mean, stddev = shape
+    return initializers.RandomNormal(mean=mean, stddev=stddev, seed=seed)
 
 def get_model(num_users, num_items, latent_dim, num_tasks, regs=[0,0]):
     # Input variables
@@ -113,14 +113,14 @@ if __name__ == '__main__':
     
     topK = 10
     evaluation_threads = 1 #mp.cpu_count()
-    print("GMF arguments: %s" %(args))
-    model_out_file = 'Pretrain/%s_GMF_%d_%d.h5' %(args.dataset, num_factors, time())
+    print("MGMF arguments: %s" %(args))
+    model_out_file = 'Pretrain/%s_MGMF_%d_%d.h5' %(args.dataset, num_factors, time())
     # Loading data
     t1 = time()
     dataset = Dataset(args.path)
     train, testRatings, testNegatives, genreList = dataset.train_ratings, dataset.test_ratings, dataset.negatives, dataset.genre
-    num_users = 671
-    num_items = 9125
+    num_users = 6040
+    num_items = 3900
     print("Load data done [%.1f s]. #user=%d, #item=%d, #train=%d, #test=%d" 
         %(time()-t1, num_users, num_items, train.shape[0], testRatings.shape[0]))
 
