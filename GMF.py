@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import backend as K
+import pandas as pd
 
 from tensorflow.keras import initializers
 from tensorflow.keras.models import Sequential, Model, load_model, save_model
@@ -161,6 +162,10 @@ if __name__ == '__main__':
     #p_norm = np.linalg.norm(model.get_layer('prediction').get_weights()[0])
     print('Init: HR = %.4f, NDCG = %.4f\t [%.1f s]' % (hr, ndcg, time()-t1))
 
+    # save Hit ratio and ndcg, loss
+    output = pd.DataFrame(columns=['hr', 'ndcg'])
+    output.loc[0] = [hr, ndcg]
+
 
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
@@ -181,11 +186,14 @@ if __name__ == '__main__':
             hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
                   % (epoch,  t2-t1, hr, ndcg, loss, time()-t2))
+            output.loc[epoch+1] = [hr, ndcg]
             if hr > best_hr:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
+    
 
+    output.to_csv('outputs/eval_result_gmf.csv')
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
     if args.out > 0:
         print("The best GMF model is saved to %s" %(model_out_file))
