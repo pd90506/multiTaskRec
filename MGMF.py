@@ -25,7 +25,7 @@ class Args(object):
         self.dataset = '100k'
         self.epochs = 100
         self.batch_size = 256
-        self.num_factors = 8
+        self.num_factors = 16
         self.regs = '[0,0]'
         self.num_neg = 4
         self.lr = 0.001
@@ -58,6 +58,7 @@ def get_model(num_users, num_items, latent_dim, num_tasks, regs=[0,0]):
     
     # Final prediction layer
     #prediction = Lambda(lambda x: K.sigmoid(K.sum(x)), output_shape=(1,))(predict_vector)
+    #predict_vector = Dense(16, activation='sigmoid', kernel_initializer='lecun_uniform', name = 'fully-connected')(predict_vector)
     predictions = Dense(num_tasks, activation='sigmoid', kernel_initializer='lecun_uniform', name = 'predictions')(predict_vector)
     task_prediction = Dot(1)([predictions, task_input])
     
@@ -168,7 +169,7 @@ if __name__ == '__main__':
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input), genre_input], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=1, verbose=0, shuffle=True)
+                         batch_size=batch_size, epochs=1, verbose=1, shuffle=True)
         t2 = time()
         
         # Evaluation
