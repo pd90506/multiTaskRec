@@ -62,7 +62,7 @@ class Args(object):
         self.dataset = '100k'
         self.epochs = 100
         self.batch_size = 256
-        self.num_factors = 16
+        self.num_factors = 8
         self.layers = '[64,32,16,8]'
         self.reg_mf = '[0,0]'
         self.reg_layers = '[0,0,0,0]'
