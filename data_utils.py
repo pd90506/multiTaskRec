@@ -45,9 +45,9 @@ def loadMLData(file_dir, movie_dir):
 
     # read data from file and combine by merging, 
     # select interested columns 
-    ml_rating = pd.read_csv(file_dir, sep='::', header=0, \
+    ml_rating = pd.read_csv(file_dir, header=0, \
                             names=['uid', 'mid', 'rating', 'timestamp'])
-    mv_df = pd.read_csv(movie_dir, sep='::', header=0, \
+    mv_df = pd.read_csv(movie_dir, header=0, \
                             names=['mid', 'title', 'genre_string'])
     mv_df['genre'] = mv_df['genre_string'].apply(genre_to_single_int) # choose which kind of genre to output
     ml_rating = pd.merge(ml_rating, mv_df, on=['mid'], how='left')
@@ -126,8 +126,8 @@ def split_train_test(ratings):
 
 
 if __name__ == "__main__":
-    y, mv = loadMLData('movielens/ratings.dat', 'movielens/movies.dat')
-    movie_genre_name = 'Data/movie.genre.csv'
+    y, mv = loadMLData('movielens/ratings.csv', 'movielens/movies.csv')
+    movie_genre_name = 'Data/ml-1m.genre'
     train_file_name = 'Data/ml-1m.train.rating'
     test_file_name = 'Data/ml-1m.test.rating'
     negative_file_name = 'Data/ml-1m.test.negative'

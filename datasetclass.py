@@ -2,12 +2,18 @@ import pandas as pd
 
 class Dataset(object):
     """ class docs"""
-    def __init__(self, path):
-        self.train_ratings = self.load_train_ratings(path + 'ml-1m.train.rating')
-        self.test_ratings = self.load_train_ratings(path + 'ml-1m.test.rating')
-        self.negatives = self.load_negatives(path + 'ml-1m.test.negative')
-        self.genre = self.load_genre(path + 'movie.genre.csv')
-        #assert self.test_ratings.shape[0] == self.negatives.shape[0]
+    def __init__(self, path, size='1m'):
+        if size == '1m':
+            self.train_ratings = self.load_train_ratings(path + 'ml-1m.train.rating')
+            self.test_ratings = self.load_train_ratings(path + 'ml-1m.test.rating')
+            self.negatives = self.load_negatives(path + 'ml-1m.test.negative')
+            self.genre = self.load_genre(path + 'ml-1m.genre')
+            #assert self.test_ratings.shape[0] == self.negatives.shape[0]
+        elif size =='100k':
+            self.train_ratings = self.load_train_ratings(path + 'ml-100k.train.rating')
+            self.test_ratings = self.load_train_ratings(path + 'ml-100k.test.rating')
+            self.negatives = self.load_negatives(path + 'ml-100k.test.negative')
+            self.genre = self.load_genre(path + 'ml-100k.genre')
         
     
     def load_train_ratings(self, path):
@@ -25,7 +31,7 @@ class Dataset(object):
         return genreList
 
 if __name__ == '__main__':
-    dataset = Dataset('Data/')
+    dataset = Dataset('Data/', '100k')
     x = dataset.train_ratings
     y = dataset.test_ratings
     z = dataset.negatives

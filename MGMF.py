@@ -22,7 +22,7 @@ class Args(object):
     """A simulator of parser in jupyter notebook"""
     def __init__(self):
         self.path = 'Data/'
-        self.dataset = 'ml-1m'
+        self.dataset = '100k'
         self.epochs = 100
         self.batch_size = 256
         self.num_factors = 8
@@ -115,12 +115,22 @@ if __name__ == '__main__':
     evaluation_threads = 1 #mp.cpu_count()
     print("MGMF arguments: %s" %(args))
     model_out_file = 'Pretrain/%s_MGMF_%d_%d.h5' %(args.dataset, num_factors, time())
+    result_out_file = 'outputs/%s_MGMF_%d_%d.csv' %(args.dataset, num_factors, time())
     # Loading data
     t1 = time()
-    dataset = Dataset(args.path)
+
+    if args.dataset=='1m':
+        num_users = 6040
+        num_items = 3900
+    elif args.dataset=='100k':
+        num_users = 671
+        num_items = 9125
+    else:
+        raise Exception('wrong dataset size!!!')   
+
+    dataset = Dataset(args.path, args.dataset)
     train, testRatings, testNegatives, genreList = dataset.train_ratings, dataset.test_ratings, dataset.negatives, dataset.genre
-    num_users = 6040
-    num_items = 3900
+
     print("Load data done [%.1f s]. #user=%d, #item=%d, #train=%d, #test=%d" 
         %(time()-t1, num_users, num_items, train.shape[0], testRatings.shape[0]))
 
@@ -173,8 +183,7 @@ if __name__ == '__main__':
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
 
-    output.to_csv('outputs/eval_result.csv')
+    output.to_csv(result_out_file)
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
-    print('pause')
     
   
