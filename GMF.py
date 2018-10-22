@@ -31,7 +31,7 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '1m'
         self.epochs = 50
-        self.batch_size = 256
+        self.batch_size = 2048
         self.num_factors = 8
         self.regs = '[0,0]'
         self.num_neg = 4
