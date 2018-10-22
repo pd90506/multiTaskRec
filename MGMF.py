@@ -21,11 +21,11 @@ class Args(object):
     """A simulator of parser in jupyter notebook"""
     def __init__(self):
         self.path = 'Data/'
-        self.dataset = '1m'
-        self.epochs = 100
+        self.dataset = '100k'
+        self.epochs = 50
         self.batch_size = 256
         self.num_factors = 8
-        self.regs = '[0,0]'
+        self.regs = '[0.00001,0.00001]'
         self.num_neg = 4
         self.lr = 0.001
         self.learner = 'adam'
@@ -162,13 +162,13 @@ def fit():
     
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
-    for epoch in range(epochs):
+    for epoch in range(int(epochs/5)):
         t1 = time()
 
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input), genre_input], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=1, verbose=1, shuffle=True)
+                         batch_size=batch_size, epochs=5, verbose=1, shuffle=True)
         t2 = time()
         
         # Evaluation
@@ -178,7 +178,7 @@ def fit():
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
                   % (epoch,  t2-t1, hr, ndcg, loss, time()-t2))
             output.loc[epoch+1] = [hr, ndcg]
-            if hr > best_hr:
+            if ndcg > best_ndcg:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)

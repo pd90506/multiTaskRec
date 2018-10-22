@@ -29,9 +29,9 @@ class Args(object):
     """A simulator of parser in jupyter notebook"""
     def __init__(self):
         self.path = 'Data/'
-        self.dataset = '1m'
-        self.epochs = 50
-        self.batch_size = 2048
+        self.dataset = '100k'
+        self.epochs = 100
+        self.batch_size = 256
         self.num_factors = 8
         self.regs = '[0,0]'
         self.num_neg = 4
@@ -89,6 +89,7 @@ def get_train_instances(train, num_negatives):
             item_input.append(int(j))
             labels.append(0)
     return user_input, item_input, labels
+
 
 
 def fit():
@@ -154,14 +155,15 @@ def fit():
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
     # Generate training instances
     user_input, item_input, labels = get_train_instances(train, num_negatives)
-    for epoch in range(epochs):
+
+    for epoch in range(int(epochs/5)):
         t1 = time()
 
         
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=1, verbose=1, shuffle=True)
+                         batch_size=batch_size, epochs=5, verbose=1, shuffle=True)
         t2 = time()
         
         # Evaluation
