@@ -32,7 +32,7 @@ class Args(object):
         self.dataset = '100k'
         self.epochs = 50
         self.batch_size = 256
-        self.num_factors = 16
+        self.num_factors = 8
         self.regs = '[0,0]'
         self.num_neg = 4
         self.lr = 0.001
@@ -90,7 +90,8 @@ def get_train_instances(train, num_negatives):
             labels.append(0)
     return user_input, item_input, labels
 
-if __name__ == '__main__':
+
+def fit():
     #args = parse_args()
     args = Args()
     num_factors = args.num_factors
@@ -151,10 +152,11 @@ if __name__ == '__main__':
 
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
+    # Generate training instances
+    user_input, item_input, labels = get_train_instances(train, num_negatives)
     for epoch in range(epochs):
         t1 = time()
-        # Generate training instances
-        user_input, item_input, labels = get_train_instances(train, num_negatives)
+
         
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
@@ -169,7 +171,7 @@ if __name__ == '__main__':
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
                   % (epoch,  t2-t1, hr, ndcg, loss, time()-t2))
             output.loc[epoch+1] = [hr, ndcg]
-            if hr > best_hr:
+            if ndcg > best_ndcg:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
@@ -179,3 +181,9 @@ if __name__ == '__main__':
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
     if args.out > 0:
         print("The best GMF model is saved to %s" %(model_out_file))
+
+    return([best_iter, best_hr, best_ndcg])
+
+
+if __name__ == '__main__':
+    fit()
