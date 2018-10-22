@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import random 
+import os
+from os.path import dirname, abspath
 from sklearn.model_selection import train_test_split
 
 def genre_to_int_list(genre_string):
@@ -124,22 +126,61 @@ def split_train_test(ratings):
     #train, test = train_test_split(ratings, test_size=0.1, shuffle=True)
     #return [train, test]
 
-
-if __name__ == "__main__":
-    y, mv = loadMLData('movielens/ratings.csv', 'movielens/movies.csv')
-    movie_genre_name = 'Data/ml-1m.genre'
-    train_file_name = 'Data/ml-1m.train.rating'
-    test_file_name = 'Data/ml-1m.test.rating'
-    negative_file_name = 'Data/ml-1m.test.negative'
-
+def load_ml(file_dir, movie_dir, genre_dir, train_dir, test_dir, neg_dir):
+    """ load movielens dataset
+        Args:
+            file_dir: rating csv file
+            movie_dir: movie info csv file
+            genre_dir: output genre csv file
+            train_dir: output train csv file
+            test_dir: output test csv file
+            neg_dir: output negtive samples csv file
+    """
+    y, mv = loadMLData(file_dir, movie_dir)
+    movie_genre_name = genre_dir
+    train_file_name = train_dir
+    test_file_name = test_dir
+    negative_file_name = neg_dir
+    # split train test
     train, test = split_train_test(y)
-
+    # write to csv
     train.to_csv(train_file_name, index=False)
     test.to_csv(test_file_name, index=False)
     mv = mv.sort_values('itemId')
     mv.to_csv(movie_genre_name, index=False)
     negatives = sample_negative(y)
     negatives.to_csv(negative_file_name, index=False)
+
+def load_100k():
+    """ load the 100k movielens dataset """
+    # get the abspath of parent directory
+    p_dir = dirname(dirname(abspath(__file__)))
+    file_dir = p_dir + '/movielens/100k-ratings.csv'
+    movie_dir = p_dir + '/movielens/100k-movies.csv'
+    genre_dir = p_dir + '/Data/ml-100k.genre'
+    train_dir = p_dir + '/Data/ml-100k.train.rating'
+    test_dir = p_dir + '/Data/ml-100k.test.rating'
+    neg_dir = p_dir + '/Data/ml-100k.test.negative'
+    load_ml(file_dir, movie_dir, genre_dir, train_dir, test_dir, neg_dir)
+    print("100k movielens pre-processing success!")
+
+def load_1m():
+    """ load the 1m movielens dataset """
+    # get the abspath of parent directory
+    p_dir = dirname(dirname(abspath(__file__)))
+    file_dir = p_dir + '/movielens/1m-ratings.csv'
+    movie_dir = p_dir + '/movielens/1m-movies.csv'
+    genre_dir = p_dir + '/Data/ml-1m.genre'
+    train_dir = p_dir + '/Data/ml-1m.train.rating'
+    test_dir = p_dir + '/Data/ml-1m.test.rating'
+    neg_dir = p_dir + '/Data/ml-1m.test.negative'
+    load_ml(file_dir, movie_dir, genre_dir, train_dir, test_dir, neg_dir)
+    print("1m movielens pre-processing success!")    
+
+if __name__ == "__main__":
+    load_100k()
+    
+    load_1m()
 
 
 
