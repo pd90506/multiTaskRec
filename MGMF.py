@@ -16,16 +16,15 @@ from time import time
 import multiprocessing as mp
 import sys
 import math
-import argparse
 
 class Args(object):
     """A simulator of parser in jupyter notebook"""
     def __init__(self):
         self.path = 'Data/'
-        self.dataset = '100k'
+        self.dataset = '1m'
         self.epochs = 100
         self.batch_size = 256
-        self.num_factors = 16
+        self.num_factors = 8
         self.regs = '[0,0]'
         self.num_neg = 4
         self.lr = 0.001
@@ -99,8 +98,7 @@ def item_to_onehot_genre(items, genreList):
     a[np.arange(num_items), b] = 1
     return a
 
-if __name__ == '__main__':
-    #args = parse_args()
+def fit():
     args = Args()
     num_factors = args.num_factors
     regs = eval(args.regs)
@@ -158,14 +156,15 @@ if __name__ == '__main__':
     output = pd.DataFrame(columns=['hr', 'ndcg'])
     output.loc[0] = [hr, ndcg]
 
-
+    # Generate training instances
+    user_input, item_input, labels = get_train_instances(train, num_negatives)
+    genre_input = item_to_onehot_genre(item_input, genreList)
+    
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
     for epoch in range(epochs):
         t1 = time()
-        # Generate training instances
-        user_input, item_input, labels = get_train_instances(train, num_negatives)
-        genre_input = item_to_onehot_genre(item_input, genreList)
+
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input), genre_input], #input
                          np.array(labels), # labels 
@@ -186,5 +185,8 @@ if __name__ == '__main__':
 
     output.to_csv(result_out_file)
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
+
+if __name__ == '__main__':
+    fit()
     
   
