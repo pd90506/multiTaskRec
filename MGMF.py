@@ -22,14 +22,14 @@ class Args(object):
     def __init__(self):
         self.path = 'Data/'
         self.dataset = '100k'
-        self.epochs = 50
-        self.batch_size = 256
+        self.epochs = 100
+        self.batch_size = 1024
         self.num_factors = 8
         self.regs = '[0.00001,0.00001]'
         self.num_neg = 4
         self.lr = 0.001
         self.learner = 'adam'
-        self.verbose = 1
+        self.verbose = 0
         self.out = 1
         self.num_tasks = 19
 
@@ -98,17 +98,20 @@ def item_to_onehot_genre(items, genreList):
     a[np.arange(num_items), b] = 1
     return a
 
-def fit():
+def fit(name_data='100k'):
     args = Args()
     num_factors = args.num_factors
     regs = eval(args.regs)
     num_negatives = args.num_neg
     learner = args.learner
     learning_rate = args.lr
-    epochs = args.epochs
+    num_epochs = args.epochs
     batch_size = args.batch_size
     verbose = args.verbose
     num_tasks = args.num_tasks
+
+    # Override args
+    args.dataset = name_data
     
     topK = 10
     evaluation_threads = 1 #mp.cpu_count()
@@ -162,17 +165,17 @@ def fit():
     
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
-    for epoch in range(int(epochs/5)):
+    for epoch in range(int(num_epochs/5)):
         t1 = time()
 
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input), genre_input], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=5, verbose=1, shuffle=True)
+                         batch_size=batch_size, epochs=5, verbose=verbose, shuffle=True)
         t2 = time()
         
         # Evaluation
-        if epoch %verbose == 0:
+        if epoch %1 == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, genreList, topK, evaluation_threads)
             hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
@@ -183,10 +186,12 @@ def fit():
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
 
-    output.to_csv(result_out_file)
+    
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
 
+    output.to_csv(result_out_file)
+    return([best_iter, best_hr, best_ndcg])
 if __name__ == '__main__':
-    fit()
+    print(fit())
     
   

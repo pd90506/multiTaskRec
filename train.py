@@ -1,21 +1,38 @@
 import GMF
 import MGMF
+import NeuMF
+import MNeuMF
 import pandas as pd
 from data_processing.ml_utils import load_100k
 
 
-def run_model(model, output_dir, num_iter=10):
-    for i in range(num_iter):
-        load_100k()
-        best_case = model.fit()
-        output = pd.DataFrame(columns=['best_iter', 'best_hr', 'best_ndcg'])
-        output.loc[i] = best_case
-    output.to_csv(output_dir)
+def run_model(model, output):
+    best_case = model.fit('100k')
+    output.loc[i] = best_case
+    return best_case
+    
 
 
 if __name__ == '__main__':
     NUM_ITER = 10
     result_out_file1 = 'outputs/best_GMF-8.csv'
     result_out_file2 = 'outputs/best_MGMF-8.csv'
-    run_model(GMF, result_out_file1, num_iter=10)
-    run_model(MGMF, result_out_file2, num_iter=10)
+    result_out_file3 = 'outputs/best_NeuMF-8.csv'
+    result_out_file4 = 'outputs/best_MNeuMF-8.csv'
+    output_gmf = pd.DataFrame(columns=['best_iter', 'best_hr', 'best_ndcg'])
+    output_mgmf = pd.DataFrame(columns=['best_iter', 'best_hr', 'best_ndcg'])
+    output_neumf = pd.DataFrame(columns=['best_iter', 'best_hr', 'best_ndcg'])
+    output_mneumf = pd.DataFrame(columns=['best_iter', 'best_hr', 'best_ndcg'])
+    for i in range(NUM_ITER):
+        load_100k()
+        output_gmf.loc[i] = run_model(GMF, output_gmf)
+        output_mgmf.loc[i] = run_model(MGMF, output_mgmf)
+        output_neumf.loc[i] = run_model(NeuMF, output_neumf)
+        output_mneumf.loc[i] = run_model(MNeuMF, output_mneumf)
+        print("+"*40 + " Iteration {} finished ".format(i) + "+"*40)
+    
+    output_gmf.to_csv(result_out_file1)
+    output_mgmf.to_csv(result_out_file2)
+    output_neumf.to_csv(result_out_file3)
+    output_mneumf.to_csv(result_out_file4)
+    

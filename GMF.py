@@ -31,13 +31,13 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 256
+        self.batch_size = 1024
         self.num_factors = 8
-        self.regs = '[0,0]'
-        self.num_neg = 4
+        self.regs = '[0.00001,0.00001]'
+        self.num_neg = 4 
         self.lr = 0.001
         self.learner = 'adam'
-        self.verbose = 1
+        self.verbose = 0
         self.out = 1
 
 def init_normal(shape=[0,1], seed=None):
@@ -92,7 +92,7 @@ def get_train_instances(train, num_negatives):
 
 
 
-def fit():
+def fit(name_data = '100k'):
     #args = parse_args()
     args = Args()
     num_factors = args.num_factors
@@ -100,9 +100,13 @@ def fit():
     num_negatives = args.num_neg
     learner = args.learner
     learning_rate = args.lr
-    epochs = args.epochs
+    num_epochs = args.epochs
     batch_size = args.batch_size
     verbose = args.verbose
+    
+
+    # Override args
+    args.dataset = name_data
     
     topK = 10
     evaluation_threads = 1 #mp.cpu_count()
@@ -156,18 +160,18 @@ def fit():
     # Generate training instances
     user_input, item_input, labels = get_train_instances(train, num_negatives)
 
-    for epoch in range(int(epochs/5)):
+    for epoch in range(int(num_epochs/5)):
         t1 = time()
 
         
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=5, verbose=1, shuffle=True)
+                         batch_size=batch_size, epochs=5, verbose=verbose, shuffle=True)
         t2 = time()
         
         # Evaluation
-        if epoch %verbose == 0:
+        if epoch %1 == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
             hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 

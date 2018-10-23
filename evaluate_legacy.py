@@ -46,7 +46,8 @@ def evaluate_model(model, testRatings, testNegatives, K, num_thread):
     for idx, row in testRatings.iterrows():
         (hr,ndcg) = eval_one_rating(idx, row)
         hits.append(hr)
-        ndcgs.append(ndcg)      
+        ndcgs.append(ndcg)
+          
     return (hits, ndcgs)
 
 def eval_one_rating(idx, row):

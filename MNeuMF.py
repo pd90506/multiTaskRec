@@ -17,42 +17,7 @@ import multiprocessing as mp
 import sys
 
 import GMF, MLP
-import argparse
 
-#################### Arguments ####################
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run NeuMF.")
-    parser.add_argument('--path', nargs='?', default='Data/',
-                        help='Input data path.')
-    parser.add_argument('--dataset', nargs='?', default='ml-1m',
-                        help='Choose a dataset.')
-    parser.add_argument('--epochs', type=int, default=100,
-                        help='Number of epochs.')
-    parser.add_argument('--batch_size', type=int, default=256,
-                        help='Batch size.')
-    parser.add_argument('--num_factors', type=int, default=8,
-                        help='Embedding size of MF model.')
-    parser.add_argument('--layers', nargs='?', default='[64,32,16,8]',
-                        help="MLP layers. Note that the first layer is the concatenation of user and item embeddings. So layers[0]/2 is the embedding size.")
-    parser.add_argument('--reg_mf', type=float, default=0,
-                        help='Regularization for MF embeddings.')                    
-    parser.add_argument('--reg_layers', nargs='?', default='[0,0,0,0]',
-                        help="Regularization for each MLP layer. reg_layers[0] is the regularization for embeddings.")
-    parser.add_argument('--num_neg', type=int, default=4,
-                        help='Number of negative instances to pair with a positive instance.')
-    parser.add_argument('--lr', type=float, default=0.001,
-                        help='Learning rate.')
-    parser.add_argument('--learner', nargs='?', default='adam',
-                        help='Specify an optimizer: adagrad, adam, rmsprop, sgd')
-    parser.add_argument('--verbose', type=int, default=1,
-                        help='Show performance per X iterations')
-    parser.add_argument('--out', type=int, default=1,
-                        help='Whether to save the trained model.')
-    parser.add_argument('--mf_pretrain', nargs='?', default='',
-                        help='Specify the pretrain model file for MF part. If empty, no pretrain will be used')
-    parser.add_argument('--mlp_pretrain', nargs='?', default='',
-                        help='Specify the pretrain model file for MLP part. If empty, no pretrain will be used')
-    return parser.parse_args()
 
 ######Fake args######
 class Args(object):
@@ -61,15 +26,15 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 256
+        self.batch_size = 1024
         self.num_factors = 8
         self.layers = '[64,32,16,8]'
-        self.reg_mf = '[0,0]'
-        self.reg_layers = '[0,0,0,0]'
+        self.reg_mf = '[0.00001,0.00001]'
+        self.reg_layers = '[0.00001,0.00001,0.00001,0.00001]'
         self.num_neg = 4
         self.lr = 0.001
         self.learner = 'adam'
-        self.verbose = 1
+        self.verbose = 0
         self.out = 1
         self.mf_pretrain = ''
         self.mlp_pretrain= ''
@@ -188,8 +153,8 @@ def item_to_onehot_genre(items, genreList):
     a[np.arange(num_items), b] = 1
     return a
 
-if __name__ == '__main__':
-    #args = parse_args()
+def fit(name_data='100k'):
+        #args = parse_args()
     args = Args()
     num_epochs = args.epochs
     batch_size = args.batch_size
@@ -204,12 +169,15 @@ if __name__ == '__main__':
     mf_pretrain = args.mf_pretrain
     mlp_pretrain = args.mlp_pretrain
     num_tasks = args.num_tasks
+
+    # Override args
+    args.dataset = name_data
             
     topK = 10
     evaluation_threads = 1#mp.cpu_count()
     print("NeuMF arguments: %s " %(args))
-    model_out_file = 'Pretrain/%s_NeuMF_%s_%s_%d.h5' %(args.dataset, mf_dim, args.layers, time())
-    result_out_file = 'outputs/%s_NeuMF_%sd_%s_%d.csv' %(args.dataset, mf_dim, args.layers, time())
+    model_out_file = 'Pretrain/%s_MNeuMF_%d_%s_%d.h5' %(args.dataset, mf_dim, args.layers, time())
+    result_out_file = 'outputs/%s_MNeuMF_%d_%s_%d.csv' %(args.dataset, mf_dim, args.layers, time())
 
      # Loading data
     t1 = time()
@@ -259,21 +227,23 @@ if __name__ == '__main__':
     # save Hit ratio and ndcg, loss
     output = pd.DataFrame(columns=['hr', 'ndcg'])
     output.loc[0] = [hr, ndcg]
-        
+
+    # Generate training instances
+    user_input, item_input, labels = get_train_instances(train, num_negatives) 
+
     # Training model
-    for epoch in range(num_epochs):
+    for epoch in range(int(num_epochs/5)):
         t1 = time()
-        # Generate training instances
-        user_input, item_input, labels = get_train_instances(train, num_negatives)
+        
         genre_input = item_to_onehot_genre(item_input, genreList)
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input), genre_input], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=1, verbose=1, shuffle=True)
+                         batch_size=batch_size, epochs=5, verbose=verbose, shuffle=True)
         t2 = time()
         
         # Evaluation
-        if epoch %verbose == 0:
+        if epoch %1 == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, genreList, topK, evaluation_threads)
             hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
@@ -283,7 +253,13 @@ if __name__ == '__main__':
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
-    output.to_csv(result_out_file)
+    
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
     if args.out > 0:
         print("The best NeuMF model is saved to %s" %(model_out_file))
+
+    output.to_csv(result_out_file)
+    return([best_iter, best_hr, best_ndcg])
+
+if __name__ == '__main__':
+    fit()
