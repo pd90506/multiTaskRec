@@ -23,9 +23,9 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 1024
+        self.batch_size = 2048
         self.num_factors = 8
-        self.regs = '[0.00001,0.00001]'
+        self.regs = '[0,0]'
         self.num_neg = 4
         self.lr = 0.001
         self.learner = 'adam'
@@ -123,7 +123,7 @@ def fit(name_data='100k'):
 
     if args.dataset=='1m':
         num_users = 6040
-        num_items = 3900
+        num_items = 3706
     elif args.dataset=='100k':
         num_users = 671
         num_items = 9125

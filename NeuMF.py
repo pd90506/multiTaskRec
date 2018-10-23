@@ -33,11 +33,11 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 1024
+        self.batch_size = 2048
         self.num_factors = 8
         self.layers = '[64,32,16,8]'
-        self.reg_mf = '[0.00001,0.00001]'
-        self.reg_layers = '[0.00001,0.00001,0.00001,0.00001]'
+        self.reg_mf = '[0,0]'
+        self.reg_layers = '[0,0,0,0]'
         self.num_neg = 4
         self.lr = 0.001
         self.learner = 'adam'
@@ -174,7 +174,7 @@ def fit(name_data='100k'):
     t1 = time()
     if args.dataset=='1m':
         num_users = 6040
-        num_items = 3900
+        num_items = 3706
     elif args.dataset=='100k':
         num_users = 671
         num_items = 9125
@@ -252,4 +252,4 @@ def fit(name_data='100k'):
 
 
 if __name__ == '__main__':
-    fit()
+    fit('1m')

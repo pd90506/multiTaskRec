@@ -178,7 +178,7 @@ def load_1m():
     print("1m movielens pre-processing success!")    
 
 if __name__ == "__main__":
-    load_100k()
+    #load_100k()
     
     load_1m()
 
