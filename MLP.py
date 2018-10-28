@@ -17,36 +17,9 @@ from evaluate_legacy import evaluate_model
 from datasetclass import Dataset
 from time import time
 import sys
-import argparse
 import multiprocessing as mp
 
 #tf.enable_eager_execution()
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run MLP.")
-    parser.add_argument('--path', nargs='?', default='Data/',
-                        help='Input data path.')
-    parser.add_argument('--dataset', nargs='?', default='ml-1m',
-                        help='Choose a dataset.')
-    parser.add_argument('--epochs', type=int, default=100,
-                        help='Number of epochs.')
-    parser.add_argument('--batch_size', type=int, default=256,
-                        help='Batch size.')
-    parser.add_argument('--layers', nargs='?', default='[64,32,16,8]',
-                        help="Size of each layer. Note that the first layer is the concatenation of user and item embeddings. So layers[0]/2 is the embedding size.")
-    parser.add_argument('--reg_layers', nargs='?', default='[0,0,0,0]',
-                        help="Regularization for each layer")
-    parser.add_argument('--num_neg', type=int, default=4,
-                        help='Number of negative instances to pair with a positive instance.')
-    parser.add_argument('--lr', type=float, default=0.001,
-                        help='Learning rate.')
-    parser.add_argument('--learner', nargs='?', default='adam',
-                        help='Specify an optimizer: adagrad, adam, rmsprop, sgd')
-    parser.add_argument('--verbose', type=int, default=1,
-                        help='Show performance per X iterations')
-    parser.add_argument('--out', type=int, default=1,
-                        help='Whether to save the trained model.')
-    return parser.parse_args()
 
 class Args(object):
     """A simulator of parser in jupyter notebook"""
@@ -55,12 +28,12 @@ class Args(object):
         self.dataset = '100k'
         self.epochs = 100
         self.batch_size = 256
-        self.layers = '[64,32,16,16]'
+        self.layers = '[64,32,16,8]'
         self.reg_layers = '[0,0,0,0]'
         self.num_neg = 4
         self.lr = 0.001
         self.learner = 'adam'
-        self.verbose = 1
+        self.verbose = 0
         self.out = 1
 
 def init_normal(shape=[0,0.05], seed=None):
@@ -120,11 +93,11 @@ def get_train_instances(train, num_negatives):
             labels.append(0)
     return user_input, item_input, labels
 
-if __name__ == '__main__':
+def fit(name_data = '100k'):
     #args = parse_args()
     args = Args()
     path = args.path
-    dataset = args.dataset
+    #dataset = args.dataset
     layers = eval(args.layers)
     reg_layers = eval(args.reg_layers)
     num_negatives = args.num_neg
@@ -133,6 +106,9 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     epochs = args.epochs
     verbose = args.verbose
+
+    # Override args
+    args.dataset = name_data
 
     topK = 10
     evaluation_threads = 1 #mp.cpu_count()
@@ -180,15 +156,18 @@ if __name__ == '__main__':
 
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
+
+    # Generate training instances
+    user_input, item_input, labels = get_train_instances(train, num_negatives)
+
     for epoch in range(epochs):
         t1 = time()
-        # Generate training instances
-        user_input, item_input, labels = get_train_instances(train, num_negatives)
+        
 
         # Training        
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
                         np.array(labels), # labels 
-                        batch_size=batch_size, epochs=1, verbose=1, shuffle=True)
+                        batch_size=batch_size, epochs=1, verbose=verbose, shuffle=True)
         t2 = time()
 
         # Evaluation
@@ -207,3 +186,8 @@ if __name__ == '__main__':
     
     if args.out > 0:
         print("The best MLP model is saved to %s" %(model_out_file))
+
+    return([best_iter, best_hr, best_ndcg])
+
+if __name__ == '__main__':
+    fit('100k')
