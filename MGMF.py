@@ -98,7 +98,7 @@ def item_to_onehot_genre(items, genreList):
     a[np.arange(num_items), b] = 1
     return a
 
-def fit(name_data='100k'):
+def fit(name_data='100k', batch_size=2048):
     args = Args()
     num_factors = args.num_factors
     regs = eval(args.regs)
@@ -106,12 +106,13 @@ def fit(name_data='100k'):
     learner = args.learner
     learning_rate = args.lr
     num_epochs = args.epochs
-    batch_size = args.batch_size
+    #batch_size = args.batch_size
     verbose = args.verbose
     num_tasks = args.num_tasks
 
     # Override args
     args.dataset = name_data
+    args.batch_size = batch_size
     
     topK = 10
     evaluation_threads = 1 #mp.cpu_count()
@@ -165,13 +166,13 @@ def fit(name_data='100k'):
     
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
-    for epoch in range(int(num_epochs/5)):
+    for epoch in range(int(num_epochs)):
         t1 = time()
 
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input), genre_input], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=5, verbose=verbose, shuffle=True)
+                         batch_size=batch_size, epochs=1, verbose=verbose, shuffle=True)
         t2 = time()
         
         # Evaluation

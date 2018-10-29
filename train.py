@@ -7,15 +7,19 @@ import pandas as pd
 from data_processing.ml_utils import load_100k, load_1m
 
 
-def run_model(model, output):
-    best_case = model.fit('1m')
+def run_model_case(model, output, data_name, batch_size):
+    best_case = model.fit(data_name, batch_size)
     #output.loc[i] = best_case
     return best_case
     
 
 
 if __name__ == '__main__':
+    data_name = '1m'
+    batch_size = 1024
     NUM_ITER = 10
+    run_model = lambda model, output: run_model_case(model, output, data_name, batch_size)
+
     result_out_file1 = 'outputs/best_GMF-8.csv'
     result_out_file2 = 'outputs/best_MGMF-8.csv'
     result_out_file3 = 'outputs/best_NeuMF-8.csv'
@@ -27,7 +31,11 @@ if __name__ == '__main__':
     output_mneumf = pd.DataFrame(columns=['best_iter', 'best_hr', 'best_ndcg'])
     output_mlp = pd.DataFrame(columns=['best_iter', 'best_hr', 'best_ndcg'])
     for i in range(NUM_ITER):
-        load_1m()
+        if data_name == '100k':
+            load_100k
+        else:
+            load_1m
+
         output_gmf.loc[i] = run_model(GMF, output_gmf)
         output_mgmf.loc[i] = run_model(MGMF, output_mgmf)
         output_neumf.loc[i] = run_model(NeuMF, output_neumf)

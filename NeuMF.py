@@ -145,11 +145,11 @@ def get_train_instances(train, num_negatives):
             labels.append(0)
     return user_input, item_input, labels
 
-def fit(name_data='100k'):
+def fit(name_data='100k', batch_size=2048):
     #args = parse_args()
     args = Args()
     num_epochs = args.epochs
-    batch_size = args.batch_size
+    #batch_size = args.batch_size
     mf_dim = args.num_factors
     layers = eval(args.layers)
     reg_mf = eval(args.reg_mf)
@@ -163,6 +163,7 @@ def fit(name_data='100k'):
 
     # Override args
     args.dataset = name_data
+    args.batch_size = batch_size
             
     topK = 10
     evaluation_threads = 1#mp.cpu_count()
@@ -223,12 +224,12 @@ def fit(name_data='100k'):
     user_input, item_input, labels = get_train_instances(train, num_negatives)
 
     # Training model
-    for epoch in range(int(num_epochs/5)):
+    for epoch in range(int(num_epochs)):
         t1 = time()
          # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
                          np.array(labels), # labels 
-                         batch_size=batch_size, epochs=5, verbose=verbose, shuffle=True)
+                         batch_size=batch_size, epochs=1, verbose=verbose, shuffle=True)
         t2 = time()
         
         # Evaluation

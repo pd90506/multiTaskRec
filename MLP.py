@@ -27,7 +27,7 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 256
+        self.batch_size = 2048
         self.layers = '[64,32,16,8]'
         self.reg_layers = '[0,0,0,0]'
         self.num_neg = 4
@@ -93,22 +93,23 @@ def get_train_instances(train, num_negatives):
             labels.append(0)
     return user_input, item_input, labels
 
-def fit(name_data = '100k'):
+def fit(name_data = '100k', batch_size=2048):
     #args = parse_args()
     args = Args()
-    path = args.path
+    #path = args.path
     #dataset = args.dataset
     layers = eval(args.layers)
     reg_layers = eval(args.reg_layers)
     num_negatives = args.num_neg
     learner = args.learner
     learning_rate = args.lr
-    batch_size = args.batch_size
-    epochs = args.epochs
+    #batch_size = args.batch_size
+    num_epochs = args.epochs
     verbose = args.verbose
 
     # Override args
     args.dataset = name_data
+    args.batch_size = batch_size
 
     topK = 10
     evaluation_threads = 1 #mp.cpu_count()
@@ -160,7 +161,7 @@ def fit(name_data = '100k'):
     # Generate training instances
     user_input, item_input, labels = get_train_instances(train, num_negatives)
 
-    for epoch in range(epochs):
+    for epoch in range(int(num_epochs)):
         t1 = time()
         
 
@@ -171,7 +172,7 @@ def fit(name_data = '100k'):
         t2 = time()
 
         # Evaluation
-        if epoch %verbose == 0:
+        if epoch %1 == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
             hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
