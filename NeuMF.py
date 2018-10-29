@@ -1,11 +1,4 @@
-'''
-Created on Aug 9, 2016
 
-Keras Implementation of Generalized Matrix Factorization (GMF) recommender model in:
-He Xiangnan et al. Neural Collaborative Filtering. In WWW 2017.  
-
-@author: Xiangnan He (xiangnanhe@gmail.com)
-'''
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -26,7 +19,7 @@ import sys
 
 import GMF, MLP
 
-######Fake args######
+######Init args######
 class Args(object):
     """A simulator of parser in jupyter notebook"""
     def __init__(self):
@@ -46,9 +39,9 @@ class Args(object):
         self.mf_pretrain = ''
         self.mlp_pretrain= ''
 
-def init_normal(shape=[0,1], seed=None):
-    mean, stdev = shape
-    return initializers.RandomNormal(mean=0.0, stddev=0.05, seed=seed)
+def init_normal(shape=[0,0.05], seed=None):
+    mean, stddev = shape
+    return initializers.RandomNormal(mean=mean, stddev=stddev, seed=seed)
 
 def get_model(num_users, num_items, mf_dim=10, layers=[10], reg_layers=[0], reg_mf=0):
     assert len(layers) == len(reg_layers)
