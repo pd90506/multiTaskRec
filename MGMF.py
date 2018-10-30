@@ -23,7 +23,7 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 2048
+        self.batch_size = 256
         self.num_factors = 8
         self.regs = '[0,0]'
         self.num_neg = 4
@@ -159,15 +159,14 @@ def fit(name_data='100k', batch_size=2048):
     # save Hit ratio and ndcg, loss
     output = pd.DataFrame(columns=['hr', 'ndcg'])
     output.loc[0] = [hr, ndcg]
-
-    # Generate training instances
-    user_input, item_input, labels = get_train_instances(train, num_negatives)
-    genre_input = item_to_onehot_genre(item_input, genreList)
     
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
     for epoch in range(int(num_epochs)):
         t1 = time()
+        # Generate training instances
+        user_input, item_input, labels = get_train_instances(train, num_negatives)
+        genre_input = item_to_onehot_genre(item_input, genreList)
 
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input), genre_input], #input

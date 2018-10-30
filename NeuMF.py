@@ -27,7 +27,7 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 2048
+        self.batch_size = 256
         self.num_factors = 8
         self.layers = '[64,32,16,8]'
         self.reg_mf = '[0,0]'
@@ -214,12 +214,14 @@ def fit(name_data='100k', batch_size=2048):
     output = pd.DataFrame(columns=['hr', 'ndcg'])
     output.loc[0] = [hr, ndcg]
     
-    # Generate training instances
-    user_input, item_input, labels = get_train_instances(train, num_negatives)
+
 
     # Training model
     for epoch in range(int(num_epochs)):
         t1 = time()
+
+        # Generate training instances
+        user_input, item_input, labels = get_train_instances(train, num_negatives)
          # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
                          np.array(labels), # labels 
