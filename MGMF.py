@@ -182,17 +182,17 @@ def fit(name_data='100k', batch_size=2048):
             print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
                   % (epoch,  t2-t1, hr, ndcg, loss, time()-t2))
             output.loc[epoch+1] = [hr, ndcg]
-            if ndcg > best_ndcg:
+            if hr > best_hr:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
 
     
-    print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
+    print("End MGMF. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
 
     output.to_csv(result_out_file)
     return([best_iter, best_hr, best_ndcg])
 if __name__ == '__main__':
-    print(fit())
+    print(fit('1m'))
     
   

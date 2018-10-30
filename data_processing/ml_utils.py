@@ -54,7 +54,7 @@ def loadMLData(file_dir, movie_dir):
     mv_df['genre'] = mv_df['genre_string'].apply(genre_to_single_int) # choose which kind of genre to output
     ml_rating = pd.merge(ml_rating, mv_df, on=['mid'], how='left')
     ml_rating = ml_rating.dropna()
-    ml_rating = ml_rating[['uid', 'mid', 'rating', 'genre']]
+    ml_rating = ml_rating[['uid', 'mid', 'rating', 'genre', 'timestamp']]
 
     # Reindex 
     item_id = ml_rating[['mid']].drop_duplicates()
@@ -73,7 +73,7 @@ def loadMLData(file_dir, movie_dir):
     
     #ml_rating['rating'] = ml_rating['rating'] # astype(int)
 
-    ml_rating = ml_rating[['userId', 'itemId', 'rating', 'genre']]
+    ml_rating = ml_rating[['userId', 'itemId', 'rating', 'genre', 'timestamp']]
     
     # Data prepared
     print('Range of userId is [{}, {}]'.format(ml_rating.userId.min(), \
@@ -95,36 +95,12 @@ def sample_negative(ratings):
 
 def split_train_test(ratings):
     """return training set and test set by loo"""
-    ratings = ratings.sample(frac=1).reset_index(drop=True)
-    train_user_list = []
-    train_item_list = []
-    train_rating_list = []
-    test_user_list = []
-    test_item_list = []
-    test_rating_list = []
-    user_pool = set(ratings['userId'].unique())
-    for idx in user_pool:
-        flag = 0
-        items = ratings[ratings['userId']==idx][['itemId','rating']]
-        for i, row in items.iterrows():
-            if flag == 0:
-                test_user_list.append(int(idx))
-                test_item_list.append(int(row['itemId']))
-                test_rating_list.append(row['rating'])
-                flag = 1
-            else:
-                train_user_list.append(int(idx))
-                train_item_list.append(int(row['itemId']))
-                train_rating_list.append(row['rating'])
-
-    train = pd.DataFrame({'userId': train_user_list, 'itemId': train_item_list, 'rating': train_rating_list}, columns=['userId', 'itemId', 'rating'])
-    test = pd.DataFrame({'userId': test_user_list, 'itemId': test_item_list, 'rating': test_rating_list},  columns=['userId', 'itemId', 'rating'])
-    return [train, test]
+    ratings['rank_latest'] = ratings.groupby(['userId'])['timestamp'].rank(method='first', ascending=False)
+    test = ratings[ratings['rank_latest'] == 1]
+    train = ratings[ratings['rank_latest'] > 1]
+    assert train['userId'].nunique() == test['userId'].nunique()
+    return train[['userId', 'itemId', 'rating']], test[['userId', 'itemId', 'rating']]
                 
-
-                
-    #train, test = train_test_split(ratings, test_size=0.1, shuffle=True)
-    #return [train, test]
 
 def load_ml(file_dir, movie_dir, genre_dir, train_dir, test_dir, neg_dir):
     """ load movielens dataset

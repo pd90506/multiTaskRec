@@ -256,12 +256,12 @@ def fit(name_data='100k', batch_size=2048):
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
     
-    print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
+    print("End MNeuMF. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
     if args.out > 0:
-        print("The best NeuMF model is saved to %s" %(model_out_file))
+        print("The best MNeuMF model is saved to %s" %(model_out_file))
 
     output.to_csv(result_out_file)
     return([best_iter, best_hr, best_ndcg])
 
 if __name__ == '__main__':
-    fit()
+    fit('1m')

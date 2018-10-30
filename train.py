@@ -16,7 +16,7 @@ def run_model_case(model, output, data_name, batch_size):
 
 if __name__ == '__main__':
     data_name = '1m'
-    batch_size = 1024
+    batch_size = 2048
     NUM_ITER = 10
     run_model = lambda model, output: run_model_case(model, output, data_name, batch_size)
 

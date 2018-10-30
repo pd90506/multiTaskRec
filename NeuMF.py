@@ -12,6 +12,7 @@ from tensorflow.keras.layers import Embedding, Input, Dense, Multiply, Reshape, 
 from tensorflow.keras.optimizers import Adagrad, Adam, SGD, RMSprop
 from tensorflow.keras.regularizers import l2
 from evaluate_legacy import evaluate_model
+#from eval_metrics import hr_metric
 from datasetclass import Dataset
 from time import time
 import multiprocessing as mp
@@ -51,14 +52,14 @@ def get_model(num_users, num_items, mf_dim=10, layers=[10], reg_layers=[0], reg_
     item_input = Input(shape=(1,), dtype='int32', name = 'item_input')
     
     # Embedding layer
-    MF_Embedding_User = Embedding(input_dim = num_users, output_dim = mf_dim, name = 'mf_user_embedding',
+    MF_Embedding_User = Embedding(input_dim = num_users, output_dim = mf_dim, name = 'mf_embedding_user',
                                   embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_mf[0]), input_length=1)
-    MF_Embedding_Item = Embedding(input_dim = num_items, output_dim = mf_dim, name = 'mf_item_embedding',
+    MF_Embedding_Item = Embedding(input_dim = num_items, output_dim = mf_dim, name = 'mf_embedding_item',
                                   embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_mf[1]), input_length=1)  
 
-    MLP_Embedding_User = Embedding(input_dim = num_users, output_dim = int(layers[0]/2), name = 'mlp_user_embedding',
+    MLP_Embedding_User = Embedding(input_dim = num_users, output_dim = int(layers[0]/2), name = 'mlp_embedding_user',
                                   embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_layers[0]), input_length=1)
-    MLP_Embedding_Item = Embedding(input_dim = num_items, output_dim = int(layers[0]/2), name = 'mlp_item_embedding',
+    MLP_Embedding_Item = Embedding(input_dim = num_items, output_dim = int(layers[0]/2), name = 'mlp_embedding_item',
                                   embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_layers[0]), input_length=1)  
     
     # MF part
@@ -237,7 +238,7 @@ def fit(name_data='100k', batch_size=2048):
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
     
-    print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
+    print("End NeuMF. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
     if args.out > 0:
         print("The best NeuMF model is saved to %s" %(model_out_file))
 

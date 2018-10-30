@@ -201,7 +201,7 @@ def fit(name_data = '100k', batch_size=2048):
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
     output.to_csv(result_out_file)
-    print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
+    print("End MMLP. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
     
     if args.out > 0:
         print("The best MLP model is saved to %s" %(model_out_file))
