@@ -28,7 +28,7 @@ class Args(object):
         self.dataset = '100k'
         self.epochs = 100
         self.batch_size = 256
-        self.num_factors = 8
+        self.num_factors = 16
         self.layers = '[64,32,16,8]'
         self.reg_mf = '[0,0]'
         self.reg_layers = '[0,0,0,0]'
@@ -55,7 +55,7 @@ def get_model(num_users, num_items, mf_dim=10, layers=[10], reg_layers=[0], reg_
     MF_Embedding_User = Embedding(input_dim = num_users, output_dim = mf_dim, name = 'mf_embedding_user',
                                   embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_mf[0]), input_length=1)
     MF_Embedding_Item = Embedding(input_dim = num_items, output_dim = mf_dim, name = 'mf_embedding_item',
-                                  embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_mf[1]), input_length=1)  
+                                  embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_mf[0]), input_length=1)  
 
     MLP_Embedding_User = Embedding(input_dim = num_users, output_dim = int(layers[0]/2), name = 'mlp_embedding_user',
                                   embeddings_initializer = init_normal(), embeddings_regularizer = l2(reg_layers[0]), input_length=1)
