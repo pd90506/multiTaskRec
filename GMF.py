@@ -30,9 +30,9 @@ class Args(object):
     def __init__(self):
         self.path = 'Data/'
         self.dataset = '100k'
-        self.epochs = 100
-        self.batch_size = 2048
-        self.num_factors = 8
+        self.epochs = 30
+        self.batch_size = 256
+        self.num_factors = 16
         self.regs = '[0,0]'
         self.num_neg = 4 
         self.lr = 0.001
@@ -158,12 +158,12 @@ def fit(name_data = '100k', batch_size=2048):
 
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
-    # Generate training instances
-    user_input, item_input, labels = get_train_instances(train, num_negatives)
+
 
     for epoch in range(int(num_epochs)):
         t1 = time()
-
+        # Generate training instances
+        user_input, item_input, labels = get_train_instances(train, num_negatives)
         
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input

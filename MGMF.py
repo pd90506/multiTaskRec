@@ -22,9 +22,9 @@ class Args(object):
     def __init__(self):
         self.path = 'Data/'
         self.dataset = '100k'
-        self.epochs = 100
+        self.epochs = 30
         self.batch_size = 256
-        self.num_factors = 8
+        self.num_factors = 16
         self.regs = '[0,0]'
         self.num_neg = 4
         self.lr = 0.001
