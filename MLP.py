@@ -27,8 +27,8 @@ class Args(object):
         self.path = 'Data/'
         self.dataset = '100k'
         self.epochs = 100
-        self.batch_size = 2048
-        self.layers = '[64,32,16,8]'
+        self.batch_size = 256
+        self.layers = '[64,32,16,16]'
         self.reg_layers = '[0,0,0,0]'
         self.num_neg = 4
         self.lr = 0.001
