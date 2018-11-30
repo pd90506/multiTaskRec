@@ -2,11 +2,11 @@ import pandas as pd
 
 class Dataset(object):
     """ class docs"""
-    def __init__(self, path, size='100k'):
-        if size == '1m':
+    def __init__(self, path, size='ml-100k'):
+        if size == 'ml-1m':
             self.train_ratings = self.load_train_ratings(path + 'ml-1m.train.rating')
             self.test_ratings = self.load_train_ratings(path + 'ml-1m.test.rating')
-        elif size =='100k':
+        elif size =='ml-100k':
             self.train_ratings = self.load_train_ratings(path + 'ml-100k.train.rating')
             self.test_ratings = self.load_train_ratings(path + 'ml-100k.test.rating')
         
@@ -18,7 +18,7 @@ class Dataset(object):
 
 
 if __name__ == '__main__':
-    dataset = Dataset('Data/', '100k')
+    dataset = Dataset('Data/', 'ml-100k')
     x = dataset.train_ratings
     y = dataset.test_ratings
     print('pause')

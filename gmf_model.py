@@ -12,6 +12,9 @@ from tensorflow.keras.regularizers import l2
 
 from Dataset import Dataset
 
+def root_mean_squared_error(y_true, y_pred):
+        return K.sqrt(K.mean(K.square(y_pred - y_true)))
+
 def get_model(num_users=943, num_items=1682, factor=20, regs=[0.0001,0.0001]):
     # Input variables
     user_input = Input(shape=(1,), dtype='int32', name = 'user_input')
@@ -45,25 +48,52 @@ def get_train_instances(df):
     label = df['rating'].values
     return user_input, item_input, label
 
-def fit():
+def fit(data='ml-1m'):
     learning_rate = 0.001
     path = 'Data/'   
     batch_size = 256 
     verbose = 1
-    
-    model = get_model(num_users=943, num_items=1682, factor=20, regs=[0.0001,0.0001])
-    model.compile(optimizer=Adam(lr=learning_rate), loss='mean_squared_error', metrics=['mae', 'mse'])
+    factor = 16
+    regs = [0.00001,0.00001]
+    loss = root_mean_squared_error
+    metrics=['mae', root_mean_squared_error]
+    epochs = 50
 
-    dataset = Dataset(path, size='100k')
+    if data == 'ml-1m':
+        num_users = 6040
+        num_items = 3706
+    elif data == 'ml-100k':
+        num_users = 943
+        num_items = 1682
+    else:
+        raise ValueError('No a valid dataset name.')
+    
+    model = get_model(num_users=num_users, num_items=num_items, factor=factor, regs=regs)
+    model.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
+
+    dataset = Dataset(path, size=data)
     train, test = dataset.train_ratings, dataset.test_ratings
     train_user, train_item, train_label = get_train_instances(train)
     test_user, test_item, test_label = get_train_instances(test)
-    for i in range(0,40):
+
+    # start training iterations
+    # init the best loss and iters
+    best_loss, best_mae, best_mse = model.evaluate([test_user, test_item], test_label, batch_size=batch_size)
+    best_iter = -1
+
+    for i in range(0,epochs):
         print('Iteration:{}'.format(i))
         hist = model.fit([np.array(train_user), np.array(train_item)], np.array(train_label), batch_size=batch_size, epochs=1, verbose=verbose, shuffle=True)
-        test_loss = model.evaluate([test_user, test_item], test_label, batch_size=256)
-        print(test_loss)
+        test_loss = model.evaluate([test_user, test_item], test_label, batch_size=batch_size)
+        print('The test MAE = {}, RMSE = {}'.format(test_loss[1], test_loss[2]))
+        # select the best iter based on mse
+        if test_loss[2] < best_mse:
+            best_iter = i
+            best_loss, best_mae, best_mse = test_loss
+    
+    print('The best iteration is {}, with MAE = {}, RMSE = {}'.format(best_iter, best_mae, best_mse))
+        
 
 
 if __name__ == "__main__":
-    fit()
+    fit(data='ml-1m')
