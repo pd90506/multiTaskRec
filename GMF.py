@@ -121,8 +121,8 @@ def fit(name_data = '100k', batch_size=2048):
         num_users = 6040
         num_items = 3706
     elif args.dataset=='100k':
-        num_users = 671
-        num_items = 9125
+        num_users = 943
+        num_items = 1682
     else:
         raise Exception('wrong dataset size!!!')   
 
